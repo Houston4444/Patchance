@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import signal
 import sys
 import time
+import logging
 
 from os.path import dirname
 
@@ -22,8 +23,15 @@ def signal_handler(sig, frame):
         QApplication.quit()
 
 def get_code_root():
-    return dirname(dirname(__file__))
+    return dirname(__file__)
 
+def make_logger():
+    logger = logging.getLogger(__name__)
+    log_handler = logging.StreamHandler()
+    log_handler.setFormatter(logging.Formatter(
+        f"%(name)s - %(levelname)s - %(message)s"))
+    logger.setLevel(logging.WARNING)
+    logger.addHandler(log_handler)
 
 @dataclass
 class Main:
@@ -36,6 +44,8 @@ class Main:
 if __name__ == '__main__':
     # set Qt Application
     APP_TITLE = 'Patchance'
+    
+    make_logger()
     
     app = QApplication(sys.argv)
     app.setApplicationName(APP_TITLE)
@@ -53,6 +63,8 @@ if __name__ == '__main__':
     if app_translator.load(QLocale(), APP_TITLE.lower(),
                            '_', "%s/locale" % get_code_root()):
         app.installTranslator(app_translator)
+
+    print('lmmdlld',"%s/HoustonPatchbay/locale" % get_code_root() )
 
     patchbay_translator = QTranslator()
     if patchbay_translator.load(QLocale(), 'patchbay',
