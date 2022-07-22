@@ -1,0 +1,3 @@
+[submodule "HoustonPatchbay"]
+	path = HoustonPatchbay
+	url = git@github.com:Houston4444/HoustonPatchbay.git
