@@ -94,7 +94,7 @@ if __name__ == '__main__':
     
     main = Main(app, main_win, pb_manager, settings)
     pb_manager.finish_init(main)
-    
+    main_win.finish_init(main)
     main_win.show()
 
     app.exec()
