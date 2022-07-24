@@ -2,7 +2,6 @@ icône du theme user à mettre dans houstonpatchbay
 connecter au callbacker dans patchbaymanager
 
 regarder PORT_TYPE dans patchbay_tools
-Zoom widget non connecté
-bug de boites qui bougent en clic
+bug de boites qui bougent en clic (mettre en stéréo, cliquer dans le vide)
 
 filter_frame a t elle vramient besoin du patchbaymanager ?

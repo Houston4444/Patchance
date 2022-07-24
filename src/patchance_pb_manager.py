@@ -121,7 +121,7 @@ class PatchancePatchbayManager(PatchbayManager):
     def refresh(self):
         super().refresh()
         if self.jack_mng is not None:
-            self.jack_mng.get_all_ports_and_connections()
+            self.jack_mng.init_the_graph()
         
     
     def finish_init(self, main: 'Main'):
@@ -131,12 +131,12 @@ class PatchancePatchbayManager(PatchbayManager):
         self.set_canvas_menu(CanvasMenu(self))
         self.set_tools_widget(main.main_win.ui.patchbayToolsWidget)
         
-        if self.jack_mng.jack_running():
+        if self.jack_mng.jack_running:
             self.server_started()
+            self.sample_rate_changed(self.jack_mng.get_sample_rate())
+            self.buffer_size_changed(self.jack_mng.get_buffer_size())
         else:
             self.server_stopped()
-        self.sample_rate_changed(self.jack_mng.get_sample_rate())
-        self.buffer_size_changed(self.jack_mng.get_buffer_size())
         
         options_dialog = CanvasOptionsDialog(self.main_win, self._settings)
         # options_dialog.set_user_theme_icon(

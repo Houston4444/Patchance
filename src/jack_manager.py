@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import math
 import os
+import threading
+import time
 from typing import TYPE_CHECKING
 
 from PyQt5.QtCore import QObject, pyqtSignal, QTimer
@@ -72,6 +74,7 @@ class Metadata:
 
 class JackManager:
     def __init__(self, patchbay_manager: 'PatchancePatchbayManager'):
+        self.jack_running = False
         self.jack_client = None
         self.patchbay_manager = patchbay_manager
         
@@ -83,17 +86,16 @@ class JackManager:
         self._dsp_timer.setInterval(200)
         self._dsp_timer.timeout.connect(self._check_dsp)
 
-        with suppress_stdout_stderr():
-            self.jack_client = jacklib.client_open(
-                "Patchance",
-                jacklib.JackNoStartServer | jacklib.JackSessionID,
-                None)
-        
-        if self.jack_client is not None:
-            self.set_registrations()
-            self.get_all_ports_and_connections()
-            self.patchbay_manager.server_started()
-            self._dsp_timer.start()
+        self._jack_checker_timer = QTimer()
+        self._jack_checker_timer.setInterval(500)
+        self._jack_checker_timer.timeout.connect(self.start_jack_client)
+
+        self.start_jack_client()
+
+        # if self.jack_running:
+        #     self._dsp_timer.start()
+        # else:
+        #     self._jack_checker_timer.start()
     
     @staticmethod
     def get_metadata_value_str(prop: jacklib.Property) -> str:
@@ -109,7 +111,10 @@ class JackManager:
                 return ''
         return value
     
-    def get_all_ports_and_connections(self):
+    def init_the_graph(self):
+        if not self.jack_running:
+            return
+        
         #get all currents Jack ports and connections
         port_name_list : list[str] = c_char_p_p_to_list(
             jacklib.get_ports(self.jack_client, "", "", 0))
@@ -187,8 +192,58 @@ class JackManager:
         self.patchbay_manager.buffer_size_changed(
             jacklib.get_buffer_size(self.jack_client))
     
+    def check_jack_client_responding(self):
+        for i in range(100): # JACK has 5s to answer
+            time.sleep(0.050)
+
+            if not self._waiting_jack_client_open:
+                break
+        else:
+            # server never answer
+            self.patchbay_manager.server_lose()
+            
+            # JACK is not responding at all
+            # probably it is started but totally bugged
+    
+    def start_jack_client(self):
+        if self.jack_running:
+            # self._jack_checker_timer.stop()
+            return
+        
+        self._waiting_jack_client_open = True
+        
+        # Sometimes JACK never registers the client
+        # and never answers. This thread will allow to exit
+        # if JACK didn't answer 5 seconds after register ask
+        jack_waiter_thread = threading.Thread(
+            target=self.check_jack_client_responding)
+        jack_waiter_thread.start()
+
+        with suppress_stdout_stderr():
+            self.jack_client = jacklib.client_open(
+                "Patchance",
+                jacklib.JackNoStartServer | jacklib.JackSessionID,
+                None)
+
+        self._waiting_jack_client_open = False
+
+        jack_waiter_thread.join()
+
+        if self.jack_client:
+            self.jack_running = True
+            self.set_registrations()
+            self.init_the_graph()
+            self.samplerate = jacklib.get_sample_rate(self.jack_client)
+            self.buffer_size = jacklib.get_buffer_size(self.jack_client)
+            self.patchbay_manager.server_started()
+            self._dsp_timer.start()
+        else:
+            self.jack_running = False
+            self.patchbay_manager.server_stopped()
+        self._jack_checker_timer.start()
+    
     def _check_dsp(self):
-        if self.jack_client is None:
+        if not self.jack_running:
             return
         
         current_dsp = math.ceil(jacklib.cpu_load(self.jack_client))
@@ -208,15 +263,18 @@ class JackManager:
                                                 current_dsp)
             
         self._dsp_n += 1
-            
-            
-    
-    def jack_running(self) -> bool:
+
+    def is_jack_running(self) -> bool:
         if self.jack_client is None:
             return False
         
         return True
     
+    def exit(self):
+        if self.jack_client is not None:
+            jacklib.deactivate(self.jack_client)
+            jacklib.client_close(self.jack_client)
+                
     def get_buffer_size(self) -> int:
         if self.jack_client is not None:
             return jacklib.get_buffer_size(self.jack_client)
@@ -320,6 +378,8 @@ class JackManager:
         return 0
     
     def jack_shutdown_callback(self, arg=None) -> int:
+        print('jack shutdown callback')
+        self.jack_running = False
         self.patchbay_manager.server_stopped()
         return 0
     
