@@ -91,14 +91,11 @@ class PatchancePatchbayManager(PatchbayManager):
         self.set_main_win(main.main_win)
         self._setup_canvas()
         self.set_canvas_menu(CanvasMenu(self))
+        self.set_tools_widget(main.main_win.ui.patchbayToolsWidget)
         # self.set_canvas_menu(RayCanvasMenu(self))
         
         options_dialog = CanvasOptionsDialog(self.main_win, self._settings)
         # options_dialog.set_user_theme_icon(
         #     RayIcon('im-user', is_dark_theme(options_dialog)))
         self.set_options_dialog(options_dialog)
-        
-        self.add_port("strougou:kppo", 1, 2, 0)
-        self.add_port("Madarou:kppo_L", 1, 1, 0)
-        self.add_port("Madarou:kppo_R", 1, 1, 0)
 

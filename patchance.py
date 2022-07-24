@@ -16,6 +16,7 @@ from PyQt5.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings
 
 from src.main_win import MainWindow
 from src.patchance_pb_manager import PatchancePatchbayManager
+from src.jack_manager import JackManager
 
 
 def signal_handler(sig, frame):
@@ -95,6 +96,9 @@ if __name__ == '__main__':
     main = Main(app, main_win, pb_manager, settings)
     pb_manager.finish_init(main)
     main_win.finish_init(main)
+    
+    jack_manager = JackManager(pb_manager)
+    
     main_win.show()
 
     app.exec()

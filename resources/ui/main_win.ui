@@ -31,7 +31,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="JackStatesWidget" name="widget" native="true"/>
+       <widget class="JackStatesWidget" name="patchbayToolsWidget" native="true"/>
       </item>
      </layout>
     </item>
