@@ -39,6 +39,7 @@ class Main:
     app: QApplication
     main_win: MainWindow
     patchbay_manager: PatchancePatchbayManager
+    jack_manager: JackManager
     settings: QSettings
 
 
@@ -90,17 +91,20 @@ if __name__ == '__main__':
     timer.timeout.connect(lambda: None)
 
     settings = QSettings()
+    print(settings.fileName())
     main_win = MainWindow()
     pb_manager = PatchancePatchbayManager(settings)
-    
-    main = Main(app, main_win, pb_manager, settings)
+    jack_manager = JackManager(pb_manager)
+
+    main = Main(app, main_win, pb_manager, jack_manager, settings)
+
     pb_manager.finish_init(main)
     main_win.finish_init(main)
-    
-    jack_manager = JackManager(pb_manager)
-    
+
     main_win.show()
 
     app.exec()
+    
+    settings.sync()
 
     del app

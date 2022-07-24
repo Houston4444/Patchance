@@ -1,6 +1,6 @@
 
 from typing import TYPE_CHECKING
-from PyQt5.QtWidgets import QMainWindow, QShortcut
+from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut
 from PyQt5.QtCore import Qt
 
 from .ui.main_win import Ui_MainWindow
@@ -15,6 +15,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.patchbay_manager = None
+        self.settings = None
 
         self.ui.filterFrame.setVisible(False)
 
@@ -22,15 +24,42 @@ class MainWindow(QMainWindow):
         filter_bar_shortcut.setContext(Qt.ApplicationShortcut)
         filter_bar_shortcut.activated.connect(
             self.toggle_filter_frame_visibility)
+        
+        refresh_shortcut = QShortcut('Ctrl+R', self)
+        refresh_shortcut.setContext(Qt.ApplicationShortcut)
+        refresh_shortcut.activated.connect(self.refresh_patchbay)
+        refresh_shortcut_alt = QShortcut('F5', self)
+        refresh_shortcut_alt.setContext(Qt.ApplicationShortcut)
+        refresh_shortcut_alt.activated.connect(self.refresh_patchbay)
 
         self.scene = PatchScene(self, self.ui.graphicsView)
         self.ui.graphicsView.setScene(self.scene)
         
+        
+        
     def finish_init(self, main: 'Main'):
+        self.patchbay_manager = main.patchbay_manager
+        self.settings = main.settings
         self.ui.filterFrame.set_patchbay_manager(main.patchbay_manager)
         main.patchbay_manager.sg.filters_bar_toggle_wanted.connect(
             self.toggle_filter_frame_visibility)
         
+        geom = self.settings.value('MainWindow/geometry')
+
+        if geom:
+            self.restoreGeometry(geom)
+    
+    def refresh_patchbay(self):
+        if self.patchbay_manager is None:
+            return
+        
+        self.patchbay_manager.refresh()
+    
     def toggle_filter_frame_visibility(self):
         self.ui.filterFrame.setVisible(
             not self.ui.filterFrame.isVisible())
+        
+    def closeEvent(self, event):
+        self.settings.setValue('MainWindow/geometry', self.saveGeometry())
+        return super().closeEvent(event)
+    

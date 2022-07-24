@@ -4,3 +4,5 @@ connecter au callbacker dans patchbaymanager
 regarder PORT_TYPE dans patchbay_tools
 Zoom widget non connecté
 bug de boites qui bougent en clic
+
+filter_frame a t elle vramient besoin du patchbaymanager ?

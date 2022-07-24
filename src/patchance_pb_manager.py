@@ -32,13 +32,44 @@ class SignalObject(QObject):
     callback_sig = pyqtSignal(IntEnum, tuple)
 
 
+class PatchanceCallbacker(Callbacker):
+    def __init__(self, manager: 'PatchancePatchbayManager'):
+        super().__init__(manager)
+        self.mng = manager
+        
+    def _ports_connect(self, group_out_id: int, port_out_id: int,
+                       group_in_id: int, port_in_id: int):
+        port_out = self.mng.get_port_from_id(group_out_id, port_out_id)
+        port_in = self.mng.get_port_from_id(group_in_id, port_in_id)
+        if port_out is None or port_in is None:
+            return
+        
+        # assert isinstance(self.mng, PatchancePatchbayManager)
+        
+        if self.mng.jack_mng is None:
+            return
+        
+        self.mng.jack_mng.connect_ports(port_out.full_name, port_in.full_name)
+            
+
+    def _ports_disconnect(self, connection_id: int):
+        for conn in self.mng.connections:
+            if conn.connection_id == connection_id:
+                self.mng.jack_mng.disconnect_ports(
+                    conn.port_out.full_name, conn.port_in.full_name)
+                break
+
+
+
 class PatchancePatchbayManager(PatchbayManager):
     def __init__(self, settings: Union[QSettings, None] =None):
         super().__init__(settings)
         self.sgc = SignalObject()
-        self.callbacker = Callbacker(self)
+        self.callbacker = PatchanceCallbacker(self)
         self.sgc.callback_sig.connect(self.callbacker.receive)
         self._settings = settings
+        
+        self.jack_mng = None
     
     def canvas_callback(self, action: CallbackAct, *args):
         self.sgc.callback_sig.emit(action, args)
@@ -87,12 +118,25 @@ class PatchancePatchbayManager(PatchbayManager):
             self._settings.value(
                 'Canvas/semi_hide_opacity', 0.17, type=float))
     
+    def refresh(self):
+        super().refresh()
+        if self.jack_mng is not None:
+            self.jack_mng.get_all_ports_and_connections()
+        
+    
     def finish_init(self, main: 'Main'):
+        self.jack_mng = main.jack_manager
         self.set_main_win(main.main_win)
         self._setup_canvas()
         self.set_canvas_menu(CanvasMenu(self))
         self.set_tools_widget(main.main_win.ui.patchbayToolsWidget)
-        # self.set_canvas_menu(RayCanvasMenu(self))
+        
+        if self.jack_mng.jack_running():
+            self.server_started()
+        else:
+            self.server_stopped()
+        self.sample_rate_changed(self.jack_mng.get_sample_rate())
+        self.buffer_size_changed(self.jack_mng.get_buffer_size())
         
         options_dialog = CanvasOptionsDialog(self.main_win, self._settings)
         # options_dialog.set_user_theme_icon(

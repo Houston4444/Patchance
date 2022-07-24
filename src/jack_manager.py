@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from importlib.metadata import metadata
+import math
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtCore import QObject, pyqtSignal, QTimer
 
 import local_jacklib as jacklib
 from local_jacklib.helpers import c_char_p_p_to_list
@@ -74,6 +74,14 @@ class JackManager:
     def __init__(self, patchbay_manager: 'PatchancePatchbayManager'):
         self.jack_client = None
         self.patchbay_manager = patchbay_manager
+        
+        self._dsp_n = 0
+        self._last_dsp_sent = 0
+        self._max_dsp_since_last_send = 0
+        
+        self._dsp_timer = QTimer()
+        self._dsp_timer.setInterval(200)
+        self._dsp_timer.timeout.connect(self._check_dsp)
 
         with suppress_stdout_stderr():
             self.jack_client = jacklib.client_open(
@@ -85,6 +93,7 @@ class JackManager:
             self.set_registrations()
             self.get_all_ports_and_connections()
             self.patchbay_manager.server_started()
+            self._dsp_timer.start()
     
     @staticmethod
     def get_metadata_value_str(prop: jacklib.Property) -> str:
@@ -172,6 +181,61 @@ class JackManager:
                     continue
                 value = self.get_metadata_value_str(prop)
                 self.patchbay_manager.metadata_update(int(uuid), key, value)
+        
+        self.patchbay_manager.sample_rate_changed(
+            jacklib.get_sample_rate(self.jack_client))
+        self.patchbay_manager.buffer_size_changed(
+            jacklib.get_buffer_size(self.jack_client))
+    
+    def _check_dsp(self):
+        if self.jack_client is None:
+            return
+        
+        current_dsp = math.ceil(jacklib.cpu_load(self.jack_client))
+
+        if self._dsp_n >= 5:
+            self._dsp_n = 0
+            
+            dsp_to_send = max(self._last_dsp_sent, current_dsp)
+            
+            if dsp_to_send != self._last_dsp_sent:
+                self.patchbay_manager.set_dsp_load(dsp_to_send)
+                self._last_dsp_sent = dsp_to_send
+            
+            self._max_dsp_since_last_send = 0
+        else:
+            self._max_dsp_since_last_send = max(self._max_dsp_since_last_send,
+                                                current_dsp)
+            
+        self._dsp_n += 1
+            
+            
+    
+    def jack_running(self) -> bool:
+        if self.jack_client is None:
+            return False
+        
+        return True
+    
+    def get_buffer_size(self) -> int:
+        if self.jack_client is not None:
+            return jacklib.get_buffer_size(self.jack_client)
+    
+    def get_sample_rate(self) -> int:
+        if self.jack_client is not None:
+            return jacklib.get_sample_rate((self.jack_client))
+    
+    def connect_ports(self, port_out_name: str, port_in_name: str):
+        if self.jack_client is None:
+            return
+        jacklib.connect(self.jack_client, port_out_name, port_in_name)
+    
+    def disconnect_ports(self, port_out_name: str, port_in_name: str):
+        if self.jack_client is None:
+            return
+        jacklib.disconnect(self.jack_client, port_out_name, port_in_name)
+    
+    # jacklib callbacks
     
     def jack_client_registration_callback(self, client_name: bytes,
                                           register: int, arg=None) -> int:
@@ -256,6 +320,7 @@ class JackManager:
         return 0
     
     def jack_shutdown_callback(self, arg=None) -> int:
+        self.patchbay_manager.server_stopped()
         return 0
     
     def set_registrations(self):
