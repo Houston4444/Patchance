@@ -43,6 +43,8 @@ class MainWindow(QMainWindow):
         self.ui.filterFrame.set_patchbay_manager(main.patchbay_manager)
         main.patchbay_manager.sg.filters_bar_toggle_wanted.connect(
             self.toggle_filter_frame_visibility)
+        main.patchbay_manager.sg.full_screen_toggle_wanted.connect(
+            self.toggle_patchbay_full_screen)
         
         geom = self.settings.value('MainWindow/geometry')
 
@@ -54,6 +56,16 @@ class MainWindow(QMainWindow):
             return
         
         self.patchbay_manager.refresh()
+    
+    def toggle_patchbay_full_screen(self):
+        if self.isFullScreen():
+            self.ui.verticalLayout.setContentsMargins(2, 2, 2, 2)
+            self.ui.topWidget.setVisible(True)
+            self.showNormal()
+        else:
+            self.ui.topWidget.setVisible(False)
+            self.ui.verticalLayout.setContentsMargins(0, 0, 0, 0)
+            self.showFullScreen()
     
     def toggle_filter_frame_visibility(self):
         self.ui.filterFrame.setVisible(
