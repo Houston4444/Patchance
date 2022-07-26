@@ -1,13 +1,5 @@
-icône du theme user à mettre dans houstonpatchbay
-connecter au callbacker dans patchbaymanager
 
-regarder PORT_TYPE dans patchbay_tools
-bug de boites qui bougent en clic (mettre en stéréo, cliquer dans le vide)
-
-filter_frame a t elle vramient besoin du patchbaymanager ?
 Gérer les positions, évidemment.
 Barre de menu ?
 
 Améliorer le passage plien/écran normal/maximisé
-
-anchorundermouse pour la view
