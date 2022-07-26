@@ -2,19 +2,15 @@
 from enum import IntEnum
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
-import time
-import os
-import sys
+from typing import TYPE_CHECKING, Union
+from unittest.mock import patch
 
-from PyQt5.QtCore import QLocale, QUrl, QSettings, pyqtSignal, QObject
-from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtCore import QSettings, pyqtSignal, QObject
 
-from .patchbay.patchcanvas.init_values import CallbackAct, PortType
 
+from .patchbay.base_elements import GroupPos, PortgroupMem
+from .patchbay.patchcanvas.init_values import CallbackAct
 from .patchbay.patchbay_manager import PatchbayManager
-from .patchbay.base_elements import (Group, GroupPos, PortgroupMem,
-                                     PortMode, BoxLayoutMode)
 from .patchbay.options_dialog import CanvasOptionsDialog
 from .patchbay.tools_widgets import PatchbayToolsWidget, CanvasMenu
 from .patchbay.calbacker import Callbacker
@@ -28,6 +24,9 @@ if TYPE_CHECKING:
     from patchance import Main
 
 
+MEMORY_FILE = 'canvas.json'
+
+
 class SignalObject(QObject):
     callback_sig = pyqtSignal(IntEnum, tuple)
 
@@ -35,7 +34,9 @@ class SignalObject(QObject):
 class PatchanceCallbacker(Callbacker):
     def __init__(self, manager: 'PatchancePatchbayManager'):
         super().__init__(manager)
-        self.mng = manager
+
+        if TYPE_CHECKING:
+            self.mng = manager
         
     def _ports_connect(self, group_out_id: int, port_out_id: int,
                        group_in_id: int, port_in_id: int):
@@ -43,8 +44,6 @@ class PatchanceCallbacker(Callbacker):
         port_in = self.mng.get_port_from_id(group_in_id, port_in_id)
         if port_out is None or port_in is None:
             return
-        
-        # assert isinstance(self.mng, PatchancePatchbayManager)
         
         if self.mng.jack_mng is None:
             return
@@ -70,6 +69,36 @@ class PatchancePatchbayManager(PatchbayManager):
         self._settings = settings
         
         self.jack_mng = None
+        self._memory_path = None
+        
+        if settings is not None:
+            self._memory_path = Path(settings.fileName()).parent.joinpath(MEMORY_FILE)
+
+            try:
+                with open(self._memory_path, 'r') as f:                
+                    json_dict = json.load(f)
+                    assert isinstance(json_dict, dict)
+            except FileNotFoundError:
+                print('fichier introuvab')
+                return
+            except:
+                print('ça va pas ton fichier')
+                return
+            
+            if 'group_positions' in json_dict.keys():
+                gposs = json_dict['group_positions']
+
+                for gpos in gposs:
+                    if isinstance(gpos, dict):
+                        self.group_positions.append(GroupPos.from_serialized_dict(gpos))
+            
+            if 'portgroups' in json_dict.keys():
+                pg_mems = json_dict['portgroups']
+
+                for pg_mem_dict in pg_mems:
+                    self.portgroups_memory.append(
+                        PortgroupMem.from_serialized_dict(pg_mem_dict))
+        
     
     def canvas_callback(self, action: CallbackAct, *args):
         self.sgc.callback_sig.emit(action, args)
@@ -138,8 +167,24 @@ class PatchancePatchbayManager(PatchbayManager):
         else:
             self.server_stopped()
         
-        options_dialog = CanvasOptionsDialog(self.main_win, self._settings)
-        # options_dialog.set_user_theme_icon(
-        #     RayIcon('im-user', is_dark_theme(options_dialog)))
-        self.set_options_dialog(options_dialog)
+        self.set_options_dialog(CanvasOptionsDialog(self.main_win, self._settings))
+    
+    def save_positions(self):
+        for gpos in self.group_positions:
+            print(gpos.group_name, gpos.layout_modes)
+        
+        gposs_as_dicts = [gpos.as_serializable_dict() for gpos in self.group_positions]
+        pg_mems_as_dict = [pg_mem.as_serializable_dict()
+                           for pg_mem in self.portgroups_memory]
+        
+        full_dict = {'group_positions': gposs_as_dicts,
+                     'portgroups': pg_mems_as_dict}
+        
+        if self._memory_path is not None:
+            try:
+                with open(self._memory_path, 'w') as f:
+                    json.dump(full_dict, f, indent=4)
+            except Exception as e:
+                print(e)
+                
 

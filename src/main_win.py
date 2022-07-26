@@ -73,5 +73,7 @@ class MainWindow(QMainWindow):
         
     def closeEvent(self, event):
         self.settings.setValue('MainWindow/geometry', self.saveGeometry())
-        return super().closeEvent(event)
+        if self.patchbay_manager is not None:
+            self.patchbay_manager.save_positions()
+        super().closeEvent(event)
     
