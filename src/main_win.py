@@ -34,8 +34,9 @@ class MainWindow(QMainWindow):
 
         self.scene = PatchScene(self, self.ui.graphicsView)
         self.ui.graphicsView.setScene(self.scene)
+        # self.setWindowFlag(Qt.FramelessWindowHint, True)
         
-        
+        self._normal_screen_maximized = False
         
     def finish_init(self, main: 'Main'):
         self.patchbay_manager = main.patchbay_manager
@@ -50,6 +51,8 @@ class MainWindow(QMainWindow):
 
         if geom:
             self.restoreGeometry(geom)
+            
+        self._normal_screen_maximized = self.isMaximized()
     
     def refresh_patchbay(self):
         if self.patchbay_manager is None:
@@ -62,11 +65,15 @@ class MainWindow(QMainWindow):
             self.ui.verticalLayout.setContentsMargins(2, 2, 2, 2)
             self.ui.topWidget.setVisible(True)
             self.showNormal()
+            if self._normal_screen_maximized:                
+                self.showMaximized()
+                
         else:
+            self._normal_screen_maximized = self.isMaximized()
             self.ui.topWidget.setVisible(False)
             self.ui.verticalLayout.setContentsMargins(0, 0, 0, 0)
             self.showFullScreen()
-    
+
     def toggle_filter_frame_visibility(self):
         self.ui.filterFrame.setVisible(
             not self.ui.filterFrame.isVisible())
