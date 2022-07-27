@@ -169,11 +169,9 @@ class PatchancePatchbayManager(PatchbayManager):
         
         self.set_options_dialog(CanvasOptionsDialog(self.main_win, self._settings))
     
-    def save_positions(self):
-        for gpos in self.group_positions:
-            print(gpos.group_name, gpos.layout_modes)
-        
-        gposs_as_dicts = [gpos.as_serializable_dict() for gpos in self.group_positions]
+    def save_positions(self):        
+        gposs_as_dicts = [gpos.as_serializable_dict()
+                          for gpos in self.group_positions]
         pg_mems_as_dict = [pg_mem.as_serializable_dict()
                            for pg_mem in self.portgroups_memory]
         

@@ -66,8 +66,6 @@ if __name__ == '__main__':
                            '_', "%s/locale" % get_code_root()):
         app.installTranslator(app_translator)
 
-    print('lmmdlld',"%s/HoustonPatchbay/locale" % get_code_root() )
-
     patchbay_translator = QTranslator()
     if patchbay_translator.load(QLocale(), 'patchbay',
                                 '_', "%s/HoustonPatchbay/locale" % get_code_root()):
@@ -91,7 +89,6 @@ if __name__ == '__main__':
     timer.timeout.connect(lambda: None)
 
     settings = QSettings()
-    print(settings.fileName())
     main_win = MainWindow()
     pb_manager = PatchancePatchbayManager(settings)
     jack_manager = JackManager(pb_manager)
