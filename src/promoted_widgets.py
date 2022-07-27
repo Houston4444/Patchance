@@ -1,7 +1,6 @@
 
 
-from .patchbay import PatchbayToolsWidget, FilterFrame
-from .patchbay import PatchGraphicsView
+from .patchbay import PatchbayToolsWidget, FilterFrame, PatchGraphicsView
 
 
 class JackStatesWidget(PatchbayToolsWidget):
