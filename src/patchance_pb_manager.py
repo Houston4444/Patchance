@@ -107,14 +107,13 @@ class PatchancePatchbayManager(PatchbayManager):
         options = patchcanvas.CanvasOptionsObject()
         options.theme_name = self._settings.value(
             'Canvas/theme', 'Black Gold', type=str)
-        options.eyecandy = patchcanvas.EyeCandy.NONE
-        if self._settings.value('Canvas/box_shadows', False, type=bool):
-            options.eyecandy = patchcanvas.EyeCandy.SMALL
-
+        options.show_shadows = self._settings.value(
+            'Canvas/box_shadows', False, type=bool)
         options.auto_hide_groups = True
         options.auto_select_items = False
         options.inline_displays = False
-        options.elastic = self._settings.value('Canvas/elastic', True, type=bool)
+        options.elastic = self._settings.value(
+            'Canvas/elastic', True, type=bool)
         options.prevent_overlap = self._settings.value(
             'Canvas/prevent_overlap', True, type=bool)
         options.max_port_width = self._settings.value(
