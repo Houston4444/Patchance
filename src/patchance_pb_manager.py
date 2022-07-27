@@ -118,6 +118,8 @@ class PatchancePatchbayManager(PatchbayManager):
             'Canvas/prevent_overlap', True, type=bool)
         options.max_port_width = self._settings.value(
             'Canvas/max_port_width', 160, type=int)
+        options.semi_hide_opacity = self._settings.value(
+                'Canvas/semi_hide_opacity', 0.17, type=float)
 
         features = patchcanvas.CanvasFeaturesObject()
         features.group_info = False
@@ -142,9 +144,6 @@ class PatchancePatchbayManager(PatchbayManager):
             'Patchance', self.main_win.scene,
             self.canvas_callback,
             tuple(theme_paths))
-        patchcanvas.set_semi_hide_opacity(
-            self._settings.value(
-                'Canvas/semi_hide_opacity', 0.17, type=float))
     
     def refresh(self):
         super().refresh()
