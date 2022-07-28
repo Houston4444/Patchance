@@ -1,17 +1,17 @@
 
-from enum import IntEnum
 import json
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
-from PyQt5.QtCore import QSettings, pyqtSignal, QObject
+from PyQt5.QtCore import QSettings
 
 from .patchbay.base_elements import GroupPos, PortgroupMem
-from .patchbay.patchbay_manager import PatchbayManager
-from .patchbay.options_dialog import CanvasOptionsDialog
-from .patchbay.canvas_menu import CanvasMenu
-from .patchbay.calbacker import Callbacker
+from .patchbay import (
+    CanvasMenu,
+    Callbacker,
+    CanvasOptionsDialog,
+    PatchbayManager)
 
 from .tools import get_code_root
 
