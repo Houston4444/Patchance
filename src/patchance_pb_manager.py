@@ -1,6 +1,7 @@
 
 from enum import IntEnum
 import json
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 from unittest.mock import patch
@@ -14,7 +15,6 @@ from .patchbay.patchbay_manager import PatchbayManager
 from .patchbay.options_dialog import CanvasOptionsDialog
 from .patchbay.tools_widgets import PatchbayToolsWidget, CanvasMenu
 from .patchbay.calbacker import Callbacker
-from .patchbay.patchcanvas import patchcanvas
 
 
 from .tools import get_code_root
@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from .main_win import MainWindow
     from patchance import Main
 
+_logger = logging.getLogger(__name__)
 
 MEMORY_FILE = 'canvas.json'
 
@@ -49,7 +50,6 @@ class PatchanceCallbacker(Callbacker):
             return
         
         self.mng.jack_mng.connect_ports(port_out.full_name, port_in.full_name)
-            
 
     def _ports_disconnect(self, connection_id: int):
         for conn in self.mng.connections:
@@ -59,13 +59,10 @@ class PatchanceCallbacker(Callbacker):
                 break
 
 
-
 class PatchancePatchbayManager(PatchbayManager):
     def __init__(self, settings: Union[QSettings, None] =None):
         super().__init__(settings)
         self.sgc = SignalObject()
-        self.callbacker = PatchanceCallbacker(self)
-        self.sgc.callback_sig.connect(self.callbacker.receive)
         self._settings = settings
         
         self.jack_mng = None
@@ -79,10 +76,12 @@ class PatchancePatchbayManager(PatchbayManager):
                     json_dict = json.load(f)
                     assert isinstance(json_dict, dict)
             except FileNotFoundError:
-                print('fichier introuvab')
+                _logger.warning(f"File {self._memory_path} has not been found,"
+                                "It is probably the first startup.")
                 return
             except:
-                print('ça va pas ton fichier')
+                _logger.warning(f"File {self._memory_path} is incorrectly written"
+                                "it will be ignored.")
                 return
             
             if 'group_positions' in json_dict.keys():
@@ -98,52 +97,18 @@ class PatchancePatchbayManager(PatchbayManager):
                 for pg_mem_dict in pg_mems:
                     self.portgroups_memory.append(
                         PortgroupMem.from_serialized_dict(pg_mem_dict))
-        
     
-    def canvas_callback(self, action: CallbackAct, *args):
-        self.sgc.callback_sig.emit(action, args)
-    
-    def _setup_canvas(self):
-        options = patchcanvas.CanvasOptionsObject()
-        options.theme_name = self._settings.value(
-            'Canvas/theme', 'Black Gold', type=str)
-        options.show_shadows = self._settings.value(
-            'Canvas/box_shadows', False, type=bool)
-        options.auto_hide_groups = True
-        options.auto_select_items = self._settings.value(
-            'Canvas/auto_select_items', False, type=bool)
-        options.inline_displays = False
-        options.elastic = self._settings.value(
-            'Canvas/elastic', True, type=bool)
-        options.prevent_overlap = self._settings.value(
-            'Canvas/prevent_overlap', True, type=bool)
-        options.max_port_width = self._settings.value(
-            'Canvas/max_port_width', 160, type=int)
-        options.semi_hide_opacity = self._settings.value(
-                'Canvas/semi_hide_opacity', 0.17, type=float)
-
-        features = patchcanvas.CanvasFeaturesObject()
-        features.group_info = False
-        features.group_rename = False
-        features.port_info = True
-        features.port_rename = False
-        features.handle_group_pos = False
-
+    def _setup_canvas(self):        
         theme_paths = (
             Path(self._settings.fileName()).parent.joinpath('patchbay_themes'),
             Path(get_code_root()).joinpath('HoustonPatchbay','themes')
             )
 
-        patchcanvas.set_options(options)
-        patchcanvas.set_features(features)
-
         if TYPE_CHECKING:
             assert isinstance(self.main_win, MainWindow)
 
-        patchcanvas.init(
-            'Patchance', self.main_win.scene,
-            self.canvas_callback,
-            theme_paths)
+        self.app_init(self.main_win.ui.graphicsView, theme_paths,
+                      callbacker=PatchanceCallbacker(self))
 
     def refresh(self):
         super().refresh()
@@ -181,6 +146,5 @@ class PatchancePatchbayManager(PatchbayManager):
                 with open(self._memory_path, 'w') as f:
                     json.dump(full_dict, f, indent=4)
             except Exception as e:
-                print(e)
-                
+                _logger.warning(str(e))
 

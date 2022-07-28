@@ -32,8 +32,8 @@ class MainWindow(QMainWindow):
         refresh_shortcut_alt.setContext(Qt.ApplicationShortcut)
         refresh_shortcut_alt.activated.connect(self.refresh_patchbay)
 
-        self.scene = PatchScene(self, self.ui.graphicsView)
-        self.ui.graphicsView.setScene(self.scene)
+        # self.scene = PatchScene(self, self.ui.graphicsView)
+        # self.ui.graphicsView.setScene(self.scene)
         # self.setWindowFlag(Qt.FramelessWindowHint, True)
         
         self._normal_screen_maximized = False
@@ -80,7 +80,5 @@ class MainWindow(QMainWindow):
         
     def closeEvent(self, event):
         self.settings.setValue('MainWindow/geometry', self.saveGeometry())
-        if self.patchbay_manager is not None:
-            self.patchbay_manager.save_positions()
         super().closeEvent(event)
     

@@ -101,7 +101,6 @@ if __name__ == '__main__':
     main_win.show()
 
     app.exec()
-    
     settings.sync()
-
+    pb_manager.save_positions()
     del app
