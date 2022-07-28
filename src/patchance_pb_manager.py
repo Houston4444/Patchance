@@ -4,18 +4,14 @@ import json
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
-from unittest.mock import patch
 
 from PyQt5.QtCore import QSettings, pyqtSignal, QObject
 
-
 from .patchbay.base_elements import GroupPos, PortgroupMem
-from .patchbay.patchcanvas.init_values import CallbackAct
 from .patchbay.patchbay_manager import PatchbayManager
 from .patchbay.options_dialog import CanvasOptionsDialog
-from .patchbay.tools_widgets import PatchbayToolsWidget, CanvasMenu
+from .patchbay.canvas_menu import CanvasMenu
 from .patchbay.calbacker import Callbacker
-
 
 from .tools import get_code_root
 
@@ -26,10 +22,6 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 MEMORY_FILE = 'canvas.json'
-
-
-class SignalObject(QObject):
-    callback_sig = pyqtSignal(IntEnum, tuple)
 
 
 class PatchanceCallbacker(Callbacker):
@@ -62,7 +54,6 @@ class PatchanceCallbacker(Callbacker):
 class PatchancePatchbayManager(PatchbayManager):
     def __init__(self, settings: Union[QSettings, None] =None):
         super().__init__(settings)
-        self.sgc = SignalObject()
         self._settings = settings
         
         self.jack_mng = None

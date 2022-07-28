@@ -5,4 +5,4 @@ As RaySession, it is based on the HoustonPatchbay which provides portgroups, wra
 
 RaySession users won't find any interest to use Patchance, Patchance is for theses ones who think they don't need a session manager.
 
-It's main goal is to present a simple app for HoustonPatchbay and show the possibility for any python Qt app to implement it easily. 
+It's main goal is to present a simple app for HoustonPatchbay and show the possibility for any python Qt app to implement it easily.
