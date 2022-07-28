@@ -110,7 +110,8 @@ class PatchancePatchbayManager(PatchbayManager):
         options.show_shadows = self._settings.value(
             'Canvas/box_shadows', False, type=bool)
         options.auto_hide_groups = True
-        options.auto_select_items = False
+        options.auto_select_items = self._settings.value(
+            'Canvas/auto_select_items', False, type=bool)
         options.inline_displays = False
         options.elastic = self._settings.value(
             'Canvas/elastic', True, type=bool)
@@ -128,11 +129,10 @@ class PatchancePatchbayManager(PatchbayManager):
         features.port_rename = False
         features.handle_group_pos = False
 
-        theme_paths = list[Path]()
-        theme_paths.append(
-            Path(self._settings.fileName()).parent.joinpath('patchbay_themes'))
-        theme_paths.append(
-            Path(get_code_root()).joinpath('HoustonPatchbay','themes'))
+        theme_paths = (
+            Path(self._settings.fileName()).parent.joinpath('patchbay_themes'),
+            Path(get_code_root()).joinpath('HoustonPatchbay','themes')
+            )
 
         patchcanvas.set_options(options)
         patchcanvas.set_features(features)
@@ -143,8 +143,8 @@ class PatchancePatchbayManager(PatchbayManager):
         patchcanvas.init(
             'Patchance', self.main_win.scene,
             self.canvas_callback,
-            tuple(theme_paths))
-    
+            theme_paths)
+
     def refresh(self):
         super().refresh()
         if self.jack_mng is not None:
