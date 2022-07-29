@@ -121,7 +121,7 @@ class PatchancePatchbayManager(PatchbayManager):
         else:
             self.server_stopped()
         
-        self.set_options_dialog(CanvasOptionsDialog(self.main_win, self._settings))
+        self.set_options_dialog(CanvasOptionsDialog(self.main_win, self, self._settings))
     
     def save_positions(self):        
         gposs_as_dicts = [gpos.as_serializable_dict()
