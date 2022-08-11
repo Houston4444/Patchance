@@ -13,9 +13,9 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon, QFontDatabase
 from PyQt5.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings
 
-from src.main_win import MainWindow
-from src.patchance_pb_manager import PatchancePatchbayManager
-from src.jack_manager import JackManager
+from main_win import MainWindow
+from patchance_pb_manager import PatchancePatchbayManager
+from jack_manager import JackManager
 
 
 
@@ -34,7 +34,7 @@ def signal_handler(sig, frame):
         QApplication.quit()
 
 def get_code_root():
-    return dirname(__file__)
+    return dirname(dirname(__file__))
 
 def make_logger():
     logger = logging.getLogger(__name__)

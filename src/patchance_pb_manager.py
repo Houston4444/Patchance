@@ -6,17 +6,17 @@ from typing import TYPE_CHECKING, Union
 
 from PyQt5.QtCore import QSettings
 
-from .patchbay.base_elements import GroupPos, PortgroupMem
-from .patchbay import (
+from patchbay.base_elements import GroupPos, PortgroupMem
+from patchbay import (
     CanvasMenu,
     Callbacker,
     CanvasOptionsDialog,
     PatchbayManager)
 
-from .tools import get_code_root
+from tools import get_code_root
 
 if TYPE_CHECKING:
-    from .main_win import MainWindow
+    from main_win import MainWindow
     from patchance import Main
 
 _logger = logging.getLogger(__name__)

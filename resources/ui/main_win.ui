@@ -83,19 +83,19 @@
   <customwidget>
    <class>JackStatesWidget</class>
    <extends>QWidget</extends>
-   <header>..promoted_widgets</header>
+   <header>promoted_widgets</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>PatchFilterFrame</class>
    <extends>QFrame</extends>
-   <header>..promoted_widgets</header>
+   <header>promoted_widgets</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>PatchGraphicsView</class>
    <extends>QGraphicsView</extends>
-   <header>..promoted_widgets</header>
+   <header>promoted_widgets</header>
   </customwidget>
  </customwidgets>
  <resources/>

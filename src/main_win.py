@@ -3,8 +3,7 @@ from typing import TYPE_CHECKING
 from PyQt5.QtWidgets import QApplication, QMainWindow, QShortcut
 from PyQt5.QtCore import Qt
 
-from .ui.main_win import Ui_MainWindow
-from .patchbay.patchcanvas.scene import PatchScene
+from ui.main_win import Ui_MainWindow
 
 if TYPE_CHECKING:
     from patchance import Main

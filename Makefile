@@ -37,7 +37,7 @@ PATCHBAY:
 # ---------------------
 # Resources
 
-RES: resources_rc.py
+RES: src/resources_rc.py
 
 resources_rc.py: resources/resources.qrc
 	$(PYRCC) $< -o $@

@@ -1,6 +1,6 @@
 
 
-from .patchbay import PatchbayToolsWidget, FilterFrame, PatchGraphicsView
+from patchbay import PatchbayToolsWidget, FilterFrame, PatchGraphicsView
 
 
 class JackStatesWidget(PatchbayToolsWidget):
@@ -9,5 +9,7 @@ class JackStatesWidget(PatchbayToolsWidget):
         
 
 class PatchFilterFrame(FilterFrame):
-    def __init__(self, parent):
-        super().__init__(parent)
+    pass
+        
+class PatchanceGraphicsView(PatchGraphicsView):
+    pass
