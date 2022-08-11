@@ -22,7 +22,7 @@ endif
 
 PYTHON := python3
 ifeq (, $(shell which $(PYTHON)))
- PYTHON := python
+  PYTHON := python
 endif
 
 PATCHBAY_DIR=HoustonPatchbay
@@ -85,10 +85,10 @@ debug:
 
 # -------------------------
 
-# install:
+install:
 # 	# Create directories
-# 	install -d $(DESTDIR)$(PREFIX)/bin/
-# 	install -d $(DESTDIR)$(PREFIX)/share/applications/
+	install -d $(DESTDIR)$(PREFIX)/bin/
+	install -d $(DESTDIR)$(PREFIX)/share/
 # 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
 # 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/24x24/apps/
 # 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/32x32/apps/
@@ -103,15 +103,6 @@ debug:
 # 	install -d $(DESTDIR)/etc/xdg/
 # 	install -d $(DESTDIR)/etc/xdg/raysession/
 # 	install -d $(DESTDIR)/etc/xdg/raysession/client_templates/
-	
-# 	# Copy Templates Factory
-# 	cp -r client_templates/40_ray_nsm  $(DESTDIR)/etc/xdg/raysession/client_templates/
-# 	cp -r client_templates/60_ray_lash $(DESTDIR)/etc/xdg/raysession/client_templates/
-# 	cp -r client_templates  $(DEST_RAY)/
-# 	cp -r session_templates $(DEST_RAY)/
-# 	cp -r session_scripts   $(DEST_RAY)/
-# 	cp -r data              $(DEST_RAY)/
-# 	cp -r patchbay_themes   $(DEST_RAY)/
 	
 # 	# Copy Desktop Files
 # 	install -m 644 data/share/applications/*.desktop \

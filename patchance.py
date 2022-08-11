@@ -2,12 +2,11 @@
 #!/usr/bin/python3 -u
 
 #libs
-from dataclasses import dataclass
 import signal
 import sys
-import time
 import logging
 
+from dataclasses import dataclass
 from os.path import dirname
 
 from PyQt5.QtWidgets import QApplication
@@ -17,6 +16,17 @@ from PyQt5.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings
 from src.main_win import MainWindow
 from src.patchance_pb_manager import PatchancePatchbayManager
 from src.jack_manager import JackManager
+
+
+
+
+@dataclass
+class Main:
+    app: QApplication
+    main_win: MainWindow
+    patchbay_manager: PatchancePatchbayManager
+    jack_manager: JackManager
+    settings: QSettings
 
 
 def signal_handler(sig, frame):
@@ -34,16 +44,7 @@ def make_logger():
     logger.setLevel(logging.WARNING)
     logger.addHandler(log_handler)
 
-@dataclass
-class Main:
-    app: QApplication
-    main_win: MainWindow
-    patchbay_manager: PatchancePatchbayManager
-    jack_manager: JackManager
-    settings: QSettings
-
-
-if __name__ == '__main__':
+def main_loop():
     # set Qt Application
     APP_TITLE = 'Patchance'
     
@@ -55,7 +56,6 @@ if __name__ == '__main__':
     app.setOrganizationName(APP_TITLE)
     # app.setWindowIcon(QIcon(
     #     f':main_icon/scalable/{ray.APP_TITLE.lower()}.svg'))
-    # app.setQuitOnLastWindowClosed(False)
     # app.setDesktopFileName(ray.APP_TITLE.lower())
 
     ### Translation process
@@ -104,3 +104,7 @@ if __name__ == '__main__':
     settings.sync()
     pb_manager.save_positions()
     del app
+
+
+if __name__ == '__main__':
+    main_loop()
