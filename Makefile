@@ -5,7 +5,7 @@
 #
 PREFIX ?= /usr/local
 DESTDIR =
-DEST_RAY := $(DESTDIR)$(PREFIX)/share/patchance
+DEST_PATCHANCE := $(DESTDIR)$(PREFIX)/share/patchance
 
 LINK = ln -s -f
 PYUIC := pyuic5
@@ -98,8 +98,8 @@ install:
 # 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
 # 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
 # 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
-# 	install -d $(DEST_RAY)/
-# 	install -d $(DEST_RAY)/locale/
+	install -d $(DEST_PATCHANCE)/
+	install -d $(DEST_PATCHANCE)/locale/
 # 	install -d $(DESTDIR)/etc/xdg/
 # 	install -d $(DESTDIR)/etc/xdg/raysession/
 # 	install -d $(DESTDIR)/etc/xdg/raysession/client_templates/
@@ -131,42 +131,42 @@ install:
 # 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 
 # 	# Install main code
-# 	cp -r src $(DEST_RAY)/
-# 	rm $(DEST_RAY)/src/gui/patchbay
-# 	cp -r $(PATCHBAY_DIR)/patchbay $(DEST_RAY)/src/gui/
+	cp -r src $(DEST_PATCHANCE)/
+	cp -r $(PATCHBAY_DIR) $(DEST_PATCHANCE)/
+	rm $(DEST_PATCHANCE)/src/patchbay
+	cp -r $(PATCHBAY_DIR)/patchbay $(DEST_PATCHANCE)/src/
+
 	
-# 	$(LINK) $(DEST_RAY)/src/bin/ray-jack_checker_daemon $(DESTDIR)$(PREFIX)/bin/
-# 	$(LINK) $(DEST_RAY)/src/bin/ray-jack_config_script  $(DESTDIR)$(PREFIX)/bin/
-# 	$(LINK) $(DEST_RAY)/src/bin/ray-pulse2jack          $(DESTDIR)$(PREFIX)/bin/
-# 	$(LINK) $(DEST_RAY)/src/bin/ray_git                 $(DESTDIR)$(PREFIX)/bin/
+# 	$(LINK) $(DEST_PATCHANCE)/src/bin/ray-jack_checker_daemon $(DESTDIR)$(PREFIX)/bin/
+# 	$(LINK) $(DEST_PATCHANCE)/src/bin/ray-jack_config_script  $(DESTDIR)$(PREFIX)/bin/
+# 	$(LINK) $(DEST_PATCHANCE)/src/bin/ray-pulse2jack          $(DESTDIR)$(PREFIX)/bin/
+# 	$(LINK) $(DEST_PATCHANCE)/src/bin/ray_git                 $(DESTDIR)$(PREFIX)/bin/
+	$(LINK) $(DEST_PATCHANCE)/src/patchance.py $(DESTDIR)$(PREFIX)/bin/patchance
 	
 # 	# compile python files
-# 	$(PYTHON) -m compileall $(DEST_RAY)/src/
+	$(PYTHON) -m compileall $(DEST_PATCHANCE)/src/
 	
 # 	# install local manual
-# 	cp -r manual $(DEST_RAY)/
+# 	cp -r manual $(DEST_PATCHANCE)/
 	
 # 	# install utility-scripts
-# 	cp -r utility-scripts $(DEST_RAY)/
+# 	cp -r utility-scripts $(DEST_PATCHANCE)/
 	
 # 	# install main bash scripts to bin
-# 	install -m 755 data/raysession  $(DESTDIR)$(PREFIX)/bin/
+	install -m 755 data/patchance  $(DESTDIR)$(PREFIX)/bin/
 # 	install -m 755 data/ray-daemon  $(DESTDIR)$(PREFIX)/bin/
 # 	install -m 755 data/ray_control $(DESTDIR)$(PREFIX)/bin/
 # 	install -m 755 data/ray-proxy   $(DESTDIR)$(PREFIX)/bin/
 	
 # 	# modify PREFIX in main bash scripts
-# 	sed -i "s?X-PREFIX-X?$(PREFIX)?" \
-# 		$(DESTDIR)$(PREFIX)/bin/raysession \
-# 		$(DESTDIR)$(PREFIX)/bin/ray-daemon \
-# 		$(DESTDIR)$(PREFIX)/bin/ray_control \
-# 		$(DESTDIR)$(PREFIX)/bin/ray-proxy
-	
-# 	# Install Translations
-# 	install -m 644 locale/*.qm $(DEST_RAY)/locale/
+	sed -i "s?X-PREFIX-X?$(PREFIX)?" \
+		$(DESTDIR)$(PREFIX)/bin/patchance
 
-# uninstall:
-# 	rm -f $(DESTDIR)$(PREFIX)/bin/raysession
+# 	# Install Translations
+#	# install -m 644 locale/*.qm $(DEST_PATCHANCE)/locale/
+
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/bin/patchance
 # 	rm -f $(DESTDIR)$(PREFIX)/bin/ray-daemon
 # 	rm -f $(DESTDIR)$(PREFIX)/bin/ray-proxy
 # 	rm -f $(DESTDIR)$(PREFIX)/bin/ray-jack_checker_daemon
@@ -180,4 +180,4 @@ install:
 # 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/raysession.svg
 # 	rm -rf $(DESTDIR)/etc/xdg/raysession/client_templates/40_ray_nsm
 # 	rm -rf $(DESTDIR)/etc/xdg/raysession/client_templates/60_ray_lash
-# 	rm -rf $(DEST_RAY)
+	rm -rf $(DEST_PATCHANCE)
