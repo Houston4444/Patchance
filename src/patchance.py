@@ -46,22 +46,21 @@ def make_logger():
 def main_loop():
     # set Qt Application
     APP_TITLE = 'Patchance'
-    
+    VERSION = (0, 1, 0)
+
     make_logger()
     
     import resources_rc
     
     app = QApplication(sys.argv)
     app.setApplicationName(APP_TITLE)
+    app.setApplicationVersion('.'.join([str(i) for i in VERSION]))
     app.setOrganizationName(APP_TITLE)
     app.setWindowIcon(QIcon(
         f':/main_icon/scalable/{APP_TITLE.lower()}.svg'))
-
-    # app.setDesktopFileName(ray.APP_TITLE.lower())
+    app.setDesktopFileName(APP_TITLE.lower())
 
     ### Translation process
-    locale = QLocale.system().name()
-
     app_translator = QTranslator()
     if app_translator.load(QLocale(), APP_TITLE.lower(),
                            '_', "%s/locale" % get_code_root()):
@@ -103,6 +102,7 @@ def main_loop():
 
     app.exec()
     settings.sync()
+    jack_manager.exit()
     pb_manager.save_positions()
     del app
 

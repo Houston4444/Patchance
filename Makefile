@@ -50,7 +50,8 @@ UI: mkdir_ui patchance
 mkdir_ui:
 	@if ! [ -e src/ui ];then mkdir -p src/ui; fi
 
-patchance: src/ui/main_win.py
+patchance: src/ui/main_win.py \
+		   src/ui/about_patchance.py
 
 src/ui/%.py: resources/ui/%.ui
 	$(PYUIC) $< -o $@
