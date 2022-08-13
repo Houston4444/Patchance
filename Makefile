@@ -39,7 +39,7 @@ PATCHBAY:
 
 RES: src/resources_rc.py
 
-resources_rc.py: resources/resources.qrc
+src/resources_rc.py: resources/resources.qrc
 	$(PYRCC) $< -o $@
 
 # ---------------------
@@ -73,7 +73,7 @@ locale/%.qm: locale/%.ts
 
 clean:
 	@(cd $(PATCHBAY_DIR) && $(MAKE) $@)
-	rm -f *~ src/*~ src/*.pyc  locale/*.qm
+	rm -f *~ src/*~ src/*.pyc  locale/*.qm src/resources_rc.py
 	rm -f -R src/ui
 	rm -f -R src/__pycache__ src/*/__pycache__ src/*/*/__pycache__ \
 		  src/*/*/*/__pycache__
@@ -105,30 +105,30 @@ install:
 # 	install -d $(DESTDIR)/etc/xdg/raysession/client_templates/
 	
 # 	# Copy Desktop Files
-# 	install -m 644 data/share/applications/*.desktop \
-# 		$(DESTDIR)$(PREFIX)/share/applications/
+	install -m 644 data/share/applications/*.desktop \
+		$(DESTDIR)$(PREFIX)/share/applications/
 
 # 	# Install icons
-# 	install -m 644 resources/main_icon/16x16/raysession.png   \
-# 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
-# 	install -m 644 resources/main_icon/24x24/raysession.png   \
-# 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/24x24/apps/
-# 	install -m 644 resources/main_icon/32x32/raysession.png   \
-# 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/32x32/apps/
-# 	install -m 644 resources/main_icon/48x48/raysession.png   \
-# 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
-# 	install -m 644 resources/main_icon/64x64/raysession.png   \
-# 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/64x64/apps/
-# 	install -m 644 resources/main_icon/96x96/raysession.png   \
-# 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/96x96/apps/
-# 	install -m 644 resources/main_icon/128x128/raysession.png \
-# 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
-# 	install -m 644 resources/main_icon/256x256/raysession.png \
-# 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
+	install -m 644 resources/main_icon/16x16/patchance.png   \
+		$(DESTDIR)$(PREFIX)/share/icons/hicolor/16x16/apps/
+	install -m 644 resources/main_icon/24x24/patchance.png   \
+		$(DESTDIR)$(PREFIX)/share/icons/hicolor/24x24/apps/
+	install -m 644 resources/main_icon/32x32/patchance.png   \
+		$(DESTDIR)$(PREFIX)/share/icons/hicolor/32x32/apps/
+	install -m 644 resources/main_icon/48x48/patchance.png   \
+		$(DESTDIR)$(PREFIX)/share/icons/hicolor/48x48/apps/
+	install -m 644 resources/main_icon/64x64/patchance.png   \
+		$(DESTDIR)$(PREFIX)/share/icons/hicolor/64x64/apps/
+	install -m 644 resources/main_icon/96x96/patchance.png   \
+		$(DESTDIR)$(PREFIX)/share/icons/hicolor/96x96/apps/
+	install -m 644 resources/main_icon/128x128/patchance.png \
+		$(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
+	install -m 644 resources/main_icon/256x256/patchance.png \
+		$(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
 
 # 	# Install icons, scalable
-# 	install -m 644 resources/main_icon/scalable/raysession.svg \
-# 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
+	install -m 644 resources/main_icon/scalable/patchance.svg \
+		$(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 
 # 	# Install main code
 	cp -r src $(DEST_PATCHANCE)/
@@ -175,9 +175,9 @@ uninstall:
 # 	rm -f $(DESTDIR)$(PREFIX)/bin/ray_control
 # 	rm -f $(DESTDIR)$(PREFIX)/bin/ray_git
 	
-# 	rm -f $(DESTDIR)$(PREFIX)/share/applications/raysession.desktop
-# 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/*/apps/raysession.png
-# 	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/raysession.svg
+	rm -f $(DESTDIR)$(PREFIX)/share/applications/patchance.desktop
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/*/apps/patchance.png
+	rm -f $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/patchance.svg
 # 	rm -rf $(DESTDIR)/etc/xdg/raysession/client_templates/40_ray_nsm
 # 	rm -rf $(DESTDIR)/etc/xdg/raysession/client_templates/60_ray_lash
 	rm -rf $(DEST_PATCHANCE)

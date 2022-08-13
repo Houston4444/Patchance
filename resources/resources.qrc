@@ -1,13 +1,13 @@
 <RCC version="1.0">
    <qresource prefix="/">
-      <file>main_icon/256x256/raysession.png</file>
-      <file>main_icon/48x48/raysession.png</file>
-      <file>main_icon/128x128/raysession.png</file>
-      <file>main_icon/64x64/raysession.png</file>
-      <file>main_icon/scalable/raysession.svg</file>
-      <file>main_icon/24x24/raysession.png</file>
-      <file>main_icon/16x16/raysession.png</file>
-      <file>main_icon/96x96/raysession.png</file>
-      <file>main_icon/32x32/raysession.png</file>
+      <file>main_icon/256x256/patchance.png</file>
+      <file>main_icon/48x48/patchance.png</file>
+      <file>main_icon/128x128/patchance.png</file>
+      <file>main_icon/64x64/patchance.png</file>
+      <file>main_icon/scalable/patchance.svg</file>
+      <file>main_icon/24x24/patchance.png</file>
+      <file>main_icon/16x16/patchance.png</file>
+      <file>main_icon/96x96/patchance.png</file>
+      <file>main_icon/32x32/patchance.png</file>
    </qresource>
 </RCC>

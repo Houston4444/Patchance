@@ -7,8 +7,7 @@ bonne implémentation du logger
 minimiser le setup canvas
 faire une icône RAPIDE
 
-see copy_theme_and_load not editable : la fonction n'existe pas !!! (options_dialog)
-
 voir trad
 
 monitor : pas de radius dans le theme, ou pas côté deco (diff input/output, regarder)
+

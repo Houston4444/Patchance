@@ -10,7 +10,7 @@ from os.path import dirname
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon, QFontDatabase
-from PyQt5.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings
+from PyQt5.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings, QResource
 
 from main_win import MainWindow
 from patchance_pb_manager import PatchancePatchbayManager
@@ -49,12 +49,14 @@ def main_loop():
     
     make_logger()
     
+    import resources_rc
+    
     app = QApplication(sys.argv)
     app.setApplicationName(APP_TITLE)
-    # app.setApplicationVersion(ray.VERSION)
     app.setOrganizationName(APP_TITLE)
-    # app.setWindowIcon(QIcon(
-    #     f':main_icon/scalable/{ray.APP_TITLE.lower()}.svg'))
+    app.setWindowIcon(QIcon(
+        f':/main_icon/scalable/{APP_TITLE.lower()}.svg'))
+
     # app.setDesktopFileName(ray.APP_TITLE.lower())
 
     ### Translation process

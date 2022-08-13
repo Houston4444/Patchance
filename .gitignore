@@ -8,14 +8,14 @@
 /src/ui/*.py
 
 #resources qt build
-/resources_rc.py
-
-/src/.*
-/src/*/.*
+/src/resources_rc.py
 
 #translations
 /locale/*.qm
 
+# hidden files
+/src/.*
+/src/*/.*
 
 #python cache
 /__pycache__/*

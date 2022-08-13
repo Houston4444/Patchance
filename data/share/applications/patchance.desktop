@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Patchance
+GenericName=Patchance
+Comment=Jack Patchbay
+Comment[fr]=Baie de brassage pour JACK
+Exec=patchance
+Icon=patchance
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Qt;
