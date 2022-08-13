@@ -5,7 +5,7 @@ import threading
 import time
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import QObject, pyqtSignal, QTimer
+from PyQt5.QtCore import QTimer
 
 import local_jacklib as jacklib
 from local_jacklib.helpers import c_char_p_p_to_list
@@ -91,11 +91,6 @@ class JackManager:
         self._jack_checker_timer.timeout.connect(self.start_jack_client)
 
         self.start_jack_client()
-
-        # if self.jack_running:
-        #     self._dsp_timer.start()
-        # else:
-        #     self._jack_checker_timer.start()
     
     @staticmethod
     def get_metadata_value_str(prop: jacklib.Property) -> str:
