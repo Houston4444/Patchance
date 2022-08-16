@@ -46,10 +46,6 @@ class MainWindow(QMainWindow):
         refresh_shortcut_alt = QShortcut('F5', self)
         refresh_shortcut_alt.setContext(Qt.ApplicationShortcut)
         refresh_shortcut_alt.activated.connect(self.refresh_patchbay)
-
-        # self.scene = PatchScene(self, self.ui.graphicsView)
-        # self.ui.graphicsView.setScene(self.scene)
-        # self.setWindowFlag(Qt.FramelessWindowHint, True)
         
         self._normal_screen_maximized = False
         self._normal_screen_had_menu = False

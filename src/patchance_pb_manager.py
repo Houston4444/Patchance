@@ -89,23 +89,20 @@ class PatchancePatchbayManager(PatchbayManager):
                     self.portgroups_memory.append(
                         PortgroupMem.from_serialized_dict(pg_mem_dict))
     
-    def _setup_canvas(self):        
-        theme_paths = (
-            Path(self._settings.fileName()).parent.joinpath('patchbay_themes'),
-            Path(get_code_root()).joinpath('HoustonPatchbay','themes')
-            )
+    def _setup_canvas(self):
+        source_theme_path = Path(get_code_root()) / 'HoustonPatchbay' / 'themes'
 
         if TYPE_CHECKING:
             assert isinstance(self.main_win, MainWindow)
 
-        self.app_init(self.main_win.ui.graphicsView, theme_paths,
-                      callbacker=PatchanceCallbacker(self))
+        self.app_init(self.main_win.ui.graphicsView, source_theme_path,
+                      callbacker=PatchanceCallbacker(self),
+                      default_theme_name='Yellow Boards')
 
     def refresh(self):
         super().refresh()
         if self.jack_mng is not None:
             self.jack_mng.init_the_graph()
-        
     
     def finish_init(self, main: 'Main'):
         self.jack_mng = main.jack_manager
