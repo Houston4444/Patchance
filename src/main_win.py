@@ -23,9 +23,9 @@ class MainWindow(QMainWindow):
         self.settings = None
 
         self.main_menu = QMenu()
-        self.main_menu.addAction(self.ui.actionShowMenuBar)
         self.last_separator = self.main_menu.addSeparator()
         self.main_menu.addMenu(self.ui.menuHelp)
+        self.main_menu.addAction(self.ui.actionShowMenuBar)
         self.main_menu.addAction(self.ui.actionQuit)
         self.ui.toolButton.setMenu(self.main_menu)
 
