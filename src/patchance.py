@@ -77,7 +77,7 @@ def main_loop():
         app.installTranslator(sys_translator)
 
     QFontDatabase.addApplicationFont(":/fonts/Ubuntu-R.ttf")
-    QFontDatabase.addApplicationFont(":fonts/Ubuntu-C.ttf")
+    QFontDatabase.addApplicationFont(":/fonts/Ubuntu-C.ttf")
 
     #connect signals
     signal.signal(signal.SIGINT, signal_handler)
