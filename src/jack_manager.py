@@ -245,8 +245,9 @@ class JackManager:
 
         if self._dsp_n >= 5:
             self._dsp_n = 0
-            
-            dsp_to_send = max(self._last_dsp_sent, current_dsp)
+        
+        if self._dsp_n == 0:
+            dsp_to_send = max(self._max_dsp_since_last_send, current_dsp)
             
             if dsp_to_send != self._last_dsp_sent:
                 self.patchbay_manager.set_dsp_load(dsp_to_send)
@@ -278,9 +279,16 @@ class JackManager:
         if self.jack_client is not None:
             return jacklib.get_sample_rate((self.jack_client))
     
+    def set_buffer_size(self, buffer_size: int):
+        if self.jack_client is None:
+            return
+        
+        jacklib.set_buffer_size(self.jack_client, buffer_size)
+    
     def connect_ports(self, port_out_name: str, port_in_name: str):
         if self.jack_client is None:
             return
+
         jacklib.connect(self.jack_client, port_out_name, port_in_name)
     
     def disconnect_ports(self, port_out_name: str, port_in_name: str):
@@ -346,7 +354,7 @@ class JackManager:
         self.patchbay_manager.add_xrun()
         return 0
     
-    def jack_buffer_size_callback(self, buffer_size: int):
+    def jack_buffer_size_callback(self, buffer_size: int, arg=None):
         self.patchbay_manager.buffer_size_changed(buffer_size)
         return 0
     
@@ -373,7 +381,6 @@ class JackManager:
         return 0
     
     def jack_shutdown_callback(self, arg=None) -> int:
-        print('jack shutdown callback')
         self.jack_running = False
         self.patchbay_manager.server_stopped()
         return 0

@@ -94,10 +94,8 @@ def main_loop():
     jack_manager = JackManager(pb_manager)
 
     main = Main(app, main_win, pb_manager, jack_manager, settings)
-
     pb_manager.finish_init(main)
     main_win.finish_init(main)
-
     main_win.show()
 
     app.exec()

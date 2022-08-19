@@ -104,11 +104,15 @@ class PatchancePatchbayManager(PatchbayManager):
         if self.jack_mng is not None:
             self.jack_mng.init_the_graph()
     
+    def change_buffersize(self, buffer_size: int):
+        super().change_buffersize(buffer_size)
+        self.jack_mng.set_buffer_size(buffer_size)
+    
     def finish_init(self, main: 'Main'):
         self.jack_mng = main.jack_manager
         self.set_main_win(main.main_win)
         self._setup_canvas()
-        
+
         self.set_canvas_menu(CanvasMenu(self))
         self.set_tools_widget(main.main_win.ui.patchbayToolsWidget)
         self.set_filter_frame(main.main_win.ui.filterFrame)
@@ -119,7 +123,7 @@ class PatchancePatchbayManager(PatchbayManager):
             self.buffer_size_changed(self.jack_mng.get_buffer_size())
         else:
             self.server_stopped()
-        
+
         self.set_options_dialog(CanvasOptionsDialog(self.main_win, self, self._settings))
     
     def save_positions(self):        
