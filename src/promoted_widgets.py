@@ -1,6 +1,7 @@
 
 
-from patchbay import PatchbayToolsWidget, FilterFrame, PatchGraphicsView
+from patchbay import (PatchbayToolsWidget, FilterFrame, PatchGraphicsView,
+                      TransportControlsFrame)
 
 
 class JackStatesWidget(PatchbayToolsWidget):
@@ -12,4 +13,7 @@ class PatchFilterFrame(FilterFrame):
     pass
         
 class PatchanceGraphicsView(PatchGraphicsView):
+    pass
+
+class PatchanceTransportControls(TransportControlsFrame):
     pass

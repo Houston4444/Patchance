@@ -108,6 +108,15 @@ class PatchancePatchbayManager(PatchbayManager):
         super().change_buffersize(buffer_size)
         self.jack_mng.set_buffer_size(buffer_size)
     
+    def transport_play_pause(self, play: bool):
+        if play:
+            self.jack_mng.transport_start()
+        else:
+            self.jack_mng.transport_pause()
+        
+    def transport_stop(self):
+        self.jack_mng.transport_stop()
+
     def finish_init(self, main: 'Main'):
         self.jack_mng = main.jack_manager
         self.set_main_win(main.main_win)
@@ -116,6 +125,7 @@ class PatchancePatchbayManager(PatchbayManager):
         self.set_canvas_menu(CanvasMenu(self))
         self.set_tools_widget(main.main_win.ui.patchbayToolsWidget)
         self.set_filter_frame(main.main_win.ui.filterFrame)
+        self.set_transport_widget(main.main_win.ui.frameTransportControls)
         
         if self.jack_mng.jack_running:
             self.server_started()
@@ -125,7 +135,7 @@ class PatchancePatchbayManager(PatchbayManager):
             self.server_stopped()
 
         self.set_options_dialog(CanvasOptionsDialog(self.main_win, self, self._settings))
-    
+
     def save_positions(self):        
         gposs_as_dicts = [gpos.as_serializable_dict()
                           for gpos in self.group_positions]

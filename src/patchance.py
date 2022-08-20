@@ -4,6 +4,7 @@
 import signal
 import sys
 import logging
+import threading
 
 from dataclasses import dataclass
 from os.path import dirname
@@ -42,6 +43,9 @@ def make_logger():
         f"%(name)s - %(levelname)s - %(message)s"))
     logger.setLevel(logging.WARNING)
     logger.addHandler(log_handler)
+
+def instantiate_jack():
+    jack_manager = JackManager(pb_manager)
 
 def main_loop():
     # set Qt Application

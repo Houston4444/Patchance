@@ -10,6 +10,7 @@ from PyQt5.QtCore import QTimer
 import local_jacklib as jacklib
 from local_jacklib.helpers import c_char_p_p_to_list
 
+from patchbay.base_elements import TransportPosition
 if TYPE_CHECKING:
     from patchance_pb_manager import PatchancePatchbayManager
 
@@ -89,6 +90,12 @@ class JackManager:
         self._jack_checker_timer = QTimer()
         self._jack_checker_timer.setInterval(500)
         self._jack_checker_timer.timeout.connect(self.start_jack_client)
+        
+        self._transport_timer = QTimer()
+        self._transport_timer.setInterval(50)
+        self._transport_timer.timeout.connect(self._check_transport)
+
+        self._last_transport_pos = None
 
         self.start_jack_client()
     
@@ -232,6 +239,7 @@ class JackManager:
             self.buffer_size = jacklib.get_buffer_size(self.jack_client)
             self.patchbay_manager.server_started()
             self._dsp_timer.start()
+            self._transport_timer.start()
         else:
             self.jack_running = False
             self.patchbay_manager.server_stopped()
@@ -259,6 +267,31 @@ class JackManager:
                                                 current_dsp)
             
         self._dsp_n += 1
+
+    def _check_transport(self):
+        if not self.jack_running:
+            return
+        
+        pos = jacklib.jack_position_t()
+        pos.valid = 0
+
+        state = jacklib.transport_query(self.jack_client, jacklib.pointer(pos))
+
+        transport_position = TransportPosition(
+            int(pos.frame),
+            bool(state),
+            bool(pos.valid & jacklib.JackPositionBBT),
+            int(pos.bar),
+            int(pos.beat),
+            int(pos.tick),
+            float(pos.beats_per_minute))
+        
+        if transport_position == self._last_transport_pos:
+            return
+        
+        self._last_transport_pos = transport_position
+
+        self.patchbay_manager.refresh_transport(transport_position)
 
     def is_jack_running(self) -> bool:
         if self.jack_client is None:
@@ -331,9 +364,6 @@ class JackManager:
     
     def jack_port_connect_callback(self, port_id_A: int, port_id_B: int,
                                    connect_yesno: bool, arg=None) -> int:
-        port_ptr_a = jacklib.port_by_id(self.jack_client, port_id_A)
-        port_ptr_b = jacklib.port_by_id(self.jack_client, port_id_B)
-        
         port_name_a = jacklib.port_name(
             jacklib.port_by_id(self.jack_client, port_id_A))
         port_name_b = jacklib.port_name(
@@ -408,3 +438,19 @@ class JackManager:
         jacklib.on_shutdown(
             self.jack_client, self.jack_shutdown_callback, None)
         jacklib.activate(self.jack_client)
+        
+    def transport_start(self):
+        if self.jack_client is None:
+            return
+        jacklib.transport_start(self.jack_client)
+    
+    def transport_pause(self):
+        if self.jack_client is None:
+            return
+        jacklib.transport_stop(self.jack_client)
+        
+    def transport_stop(self):
+        if self.jack_client is None:
+            return
+        jacklib.transport_stop(self.jack_client)
+        jacklib.transport_locate(self.jack_client, 0)
