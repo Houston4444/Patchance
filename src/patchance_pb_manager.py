@@ -117,6 +117,9 @@ class PatchancePatchbayManager(PatchbayManager):
     def transport_stop(self):
         self.jack_mng.transport_stop()
 
+    def transport_relocate(self, frame: int):
+        self.jack_mng.transport_relocate(frame)
+
     def finish_init(self, main: 'Main'):
         self.jack_mng = main.jack_manager
         self.set_main_win(main.main_win)

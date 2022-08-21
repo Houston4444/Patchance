@@ -454,3 +454,9 @@ class JackManager:
             return
         jacklib.transport_stop(self.jack_client)
         jacklib.transport_locate(self.jack_client, 0)
+    
+    def transport_relocate(self, frame: int):
+        if self.jack_client is None:
+            return
+        
+        jacklib.transport_locate(self.jack_client, frame)
