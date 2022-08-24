@@ -128,7 +128,6 @@ class PatchancePatchbayManager(PatchbayManager):
         self.set_canvas_menu(CanvasMenu(self))
         self.set_tools_widget(main.main_win.ui.patchbayToolsWidget)
         self.set_filter_frame(main.main_win.ui.filterFrame)
-        self.set_transport_widget(main.main_win.ui.frameTransportControls)
         
         if self.jack_mng.jack_running:
             self.server_started()

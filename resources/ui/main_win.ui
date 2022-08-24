@@ -48,32 +48,6 @@
         </widget>
        </item>
        <item>
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="PatchanceTransportControls" name="frameTransportControls">
-         <property name="styleSheet">
-          <string notr="true">QFrame{border:none}</string>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="JackStatesWidget" name="patchbayToolsWidget" native="true"/>
        </item>
       </layout>
@@ -184,12 +158,6 @@
    <class>PatchGraphicsView</class>
    <extends>QGraphicsView</extends>
    <header>promoted_widgets</header>
-  </customwidget>
-  <customwidget>
-   <class>PatchanceTransportControls</class>
-   <extends>QFrame</extends>
-   <header>promoted_widgets</header>
-   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>
