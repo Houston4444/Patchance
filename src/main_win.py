@@ -98,22 +98,9 @@ class MainWindow(QMainWindow):
             | ToolDisplayed.DSP_LOAD)
         
         default_disp_str = self.settings.value('tool_bar/elements', '', type=str)
-        assert isinstance(default_disp_str, str)
-
-        for disp_str in default_disp_str.split('|'):
-            delete = False
-            if disp_str.startswith('~'):
-                delete = True
-                disp_str = disp_str[1:]
-
-            if disp_str in ToolDisplayed._member_names_:
-                if delete:
-                    default_disp_widg &= ~ToolDisplayed[disp_str]
-                else:
-                    default_disp_widg |= ToolDisplayed[disp_str]
 
         self.ui.toolBar.set_default_displayed_widgets(
-            default_disp_widg)
+            default_disp_widg.filtered_by_string(default_disp_str))
 
     def _menubar_shown_toggled(self, state: int):
         self.ui.menubar.setVisible(bool(state))
