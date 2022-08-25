@@ -1,10 +1,13 @@
 
+from dis import dis
+from re import L
 from typing import TYPE_CHECKING
 from PyQt5.QtWidgets import QMainWindow, QShortcut, QMenu, QApplication, QToolButton
 from PyQt5.QtCore import Qt
 
 from about_dialog import AboutDialog
 from patchbay.tools_widgets import PatchbayToolsWidget
+from patchbay.base_elements import ToolDisplayed
 
 from ui.main_win import Ui_MainWindow
 
@@ -83,6 +86,34 @@ class MainWindow(QMainWindow):
         self.ui.menubar.addMenu(main.patchbay_manager.canvas_menu)
         self.main_menu.insertMenu(
             self.last_separator, main.patchbay_manager.canvas_menu)
+        
+        default_disp_widg = (
+            ToolDisplayed.PORT_TYPES_VIEW
+            | ToolDisplayed.ZOOM_SLIDER
+            | ToolDisplayed.TRANSPORT_CLOCK
+            | ToolDisplayed.TRANSPORT_PLAY_STOP
+            | ToolDisplayed.BUFFER_SIZE
+            | ToolDisplayed.SAMPLERATE
+            | ToolDisplayed.XRUNS
+            | ToolDisplayed.DSP_LOAD)
+        
+        default_disp_str = self.settings.value('tool_bar/elements', '', type=str)
+        assert isinstance(default_disp_str, str)
+
+        for disp_str in default_disp_str.split('|'):
+            delete = False
+            if disp_str.startswith('~'):
+                delete = True
+                disp_str = disp_str[1:]
+
+            if disp_str in ToolDisplayed._member_names_:
+                if delete:
+                    default_disp_widg &= ~ToolDisplayed[disp_str]
+                else:
+                    default_disp_widg |= ToolDisplayed[disp_str]
+
+        self.ui.toolBar.set_default_displayed_widgets(
+            default_disp_widg)
 
     def _menubar_shown_toggled(self, state: int):
         self.ui.menubar.setVisible(bool(state))
@@ -100,7 +131,7 @@ class MainWindow(QMainWindow):
     def toggle_patchbay_full_screen(self):
         if self.isFullScreen():
             self.ui.verticalLayout.setContentsMargins(2, 2, 2, 2)
-            self.ui.topWidget.setVisible(True)
+            self.ui.toolBar.setVisible(True)
             self.showNormal()
             if self._normal_screen_maximized:
                 self.showMaximized()
@@ -111,7 +142,7 @@ class MainWindow(QMainWindow):
             self._normal_screen_maximized = self.isMaximized()
             self._normal_screen_had_menu = self.ui.menubar.isVisible()
             self.ui.menubar.setVisible(False)
-            self.ui.topWidget.setVisible(False)
+            self.ui.toolBar.setVisible(False)
             self.ui.verticalLayout.setContentsMargins(0, 0, 0, 0)
             self.showFullScreen()
 
@@ -121,5 +152,9 @@ class MainWindow(QMainWindow):
         
     def closeEvent(self, event):
         self.settings.setValue('MainWindow/geometry', self.saveGeometry())
+        self.settings.setValue(
+            'tool_bar/elements',
+            self.ui.toolBar.get_displayed_widgets().to_save_string())
+    
         super().closeEvent(event)
     
