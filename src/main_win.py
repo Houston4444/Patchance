@@ -1,11 +1,10 @@
 
-from tkinter import dialog
 from typing import TYPE_CHECKING
-from PyQt5.QtWidgets import QMainWindow, QShortcut, QMenu, QApplication
+from PyQt5.QtWidgets import QMainWindow, QShortcut, QMenu, QApplication, QToolButton
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
 
 from about_dialog import AboutDialog
+from patchbay.tools_widgets import PatchbayToolsWidget
 
 from ui.main_win import Ui_MainWindow
 
@@ -27,8 +26,13 @@ class MainWindow(QMainWindow):
         self.main_menu.addMenu(self.ui.menuHelp)
         self.main_menu.addAction(self.ui.actionShowMenuBar)
         self.main_menu.addAction(self.ui.actionQuit)
-        self.ui.toolButton.setMenu(self.main_menu)
-
+        
+        self.menu_button = self.ui.toolBar.widgetForAction(self.ui.actionMainMenu)
+        if TYPE_CHECKING:
+            assert isinstance(self.menu_button, QToolButton)
+        self.menu_button.setPopupMode(QToolButton.InstantPopup)
+        self.menu_button.setMenu(self.main_menu)
+        
         self.ui.filterFrame.setVisible(False)
         self.ui.actionShowMenuBar.toggled.connect(self._menubar_shown_toggled)
         self.ui.actionQuit.triggered.connect(QApplication.quit)
@@ -50,11 +54,15 @@ class MainWindow(QMainWindow):
         self._normal_screen_maximized = False
         self._normal_screen_had_menu = False
         
+        patchbay_tools_act = self.ui.toolBar.addWidget(PatchbayToolsWidget())
+        self.patchbay_tools = self.ui.toolBar.widgetForAction(patchbay_tools_act)
+        
         self.ui.graphicsView.setFocus()
         
     def finish_init(self, main: 'Main'):
         self.patchbay_manager = main.patchbay_manager
         self.settings = main.settings
+        self.ui.toolBar.set_patchbay_manager(main.patchbay_manager)
         self.ui.filterFrame.set_patchbay_manager(main.patchbay_manager)
         main.patchbay_manager.sg.filters_bar_toggle_wanted.connect(
             self.toggle_filter_frame_visibility)

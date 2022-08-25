@@ -1,6 +1,7 @@
 
 
 from patchbay import PatchbayToolsWidget, FilterFrame, PatchGraphicsView
+from patchbay.tool_bar import PatchbayToolBar
 
 
 class JackStatesWidget(PatchbayToolsWidget):
@@ -10,6 +11,11 @@ class JackStatesWidget(PatchbayToolsWidget):
 
 class PatchFilterFrame(FilterFrame):
     pass
+
         
 class PatchanceGraphicsView(PatchGraphicsView):
+    pass
+
+
+class PatchanceToolBar(PatchbayToolBar):
     pass
