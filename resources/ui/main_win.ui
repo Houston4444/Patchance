@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>565</width>
-    <height>374</height>
+    <width>984</width>
+    <height>657</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,7 +54,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>565</width>
+     <width>984</width>
      <height>30</height>
     </rect>
    </property>
@@ -86,7 +86,7 @@
     <set>Qt::BottomToolBarArea|Qt::TopToolBarArea</set>
    </property>
    <property name="toolButtonStyle">
-    <enum>Qt::ToolButtonTextBesideIcon</enum>
+    <enum>Qt::ToolButtonIconOnly</enum>
    </property>
    <property name="floatable">
     <bool>false</bool>
@@ -143,7 +143,8 @@
   </action>
   <action name="actionMainMenu">
    <property name="icon">
-    <iconset theme="application-menu"/>
+    <iconset theme="application-menu">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Menu</string>
