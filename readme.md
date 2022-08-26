@@ -1,9 +1,9 @@
 # ![Patchance Logo](https://raw.githubusercontent.com/Houston4444/Patchance/master/resources/main_icon/128x128/patchance.png) Patchance
 
-Patchance is one more JACK patchbay GUI for GNU/Linux systems, but it could be adapted to Mac and Windows with few work.
+Patchance is one more JACK patchbay GUI for GNU/Linux systems, but it could be adapted to Mac and Windows with little effort.
 It is a direct alternative to [Catia](https://github.com/falkTX/Catia) or [Patchage](https://github.com/drobilla/patchage).
 
-![Screenshot](https://raw.githubusercontent.com/Houston4444/Patchance/master/screenshots/yellow_boards.png)
+![Screenshot](https://raw.githubusercontent.com/Houston4444/Patchance/master/screenshots/short_presentation.mkv)
 
 Features:
 * Stereo detection for port grouping with their name, for faster connections and readability
