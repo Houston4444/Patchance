@@ -99,6 +99,7 @@ install:
 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/128x128/apps/
 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/256x256/apps/
 	install -d $(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
+	install -d $(DESTDIR)$(PREFIX)/share/applications/
 	install -d $(DEST_PATCHANCE)/
 	install -d $(DEST_PATCHANCE)/locale/
 	

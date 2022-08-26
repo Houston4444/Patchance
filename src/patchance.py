@@ -4,20 +4,17 @@
 import signal
 import sys
 import logging
-import threading
 
 from dataclasses import dataclass
 from os.path import dirname
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon, QFontDatabase
-from PyQt5.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings, Qt
+from PyQt5.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings
 
 from main_win import MainWindow
 from patchance_pb_manager import PatchancePatchbayManager
 from jack_manager import JackManager
-
-
 
 
 @dataclass
@@ -43,9 +40,6 @@ def make_logger():
         f"%(name)s - %(levelname)s - %(message)s"))
     logger.setLevel(logging.WARNING)
     logger.addHandler(log_handler)
-
-def instantiate_jack():
-    jack_manager = JackManager(pb_manager)
 
 def main_loop():
     # set Qt Application
