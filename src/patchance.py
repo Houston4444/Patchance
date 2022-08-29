@@ -1,8 +1,29 @@
 #!/usr/bin/python3 -u
 
-#libs
-import signal
+APP_TITLE = 'Patchance'
+VERSION = (0, 1, 0)
+
 import sys
+
+# manage arguments now
+# Yes, that is not conventional to do this kind of code during imports
+# but it allows faster answer for --version argument.
+for arg in sys.argv[1:]:
+    if arg == '--version':
+        sys.stdout.write('.'.join([str(i) for i in VERSION]) + '\n')
+        sys.exit(0)
+    if arg == '--help':
+        info = (
+            "Patchbay application for JACK\n"
+            "Usage: patchance [--help] [--version]\n"
+            "  --help     show this help\n"
+            "  --version  print program version\n"
+        )
+        sys.stdout.write(info)
+        sys.exit(0)
+
+
+import signal
 import logging
 
 from dataclasses import dataclass
@@ -42,10 +63,6 @@ def make_logger():
     logger.addHandler(log_handler)
 
 def main_loop():
-    # set Qt Application
-    APP_TITLE = 'Patchance'
-    VERSION = (0, 1, 0)
-
     make_logger()
     
     import resources_rc
