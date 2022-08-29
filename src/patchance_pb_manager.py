@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
 from PyQt5.QtCore import QSettings
+from PyQt5.QtWidgets import QApplication
 
 from patchbay.base_elements import GroupPos, PortgroupMem
 from patchbay import (
@@ -14,6 +15,7 @@ from patchbay import (
     PatchbayManager)
 
 from tools import get_code_root
+import xdg
 
 if TYPE_CHECKING:
     from main_win import MainWindow
@@ -90,12 +92,28 @@ class PatchancePatchbayManager(PatchbayManager):
                         PortgroupMem.from_serialized_dict(pg_mem_dict))
     
     def _setup_canvas(self):
-        source_theme_path = Path(get_code_root()) / 'HoustonPatchbay' / 'themes'
+        SUBMODULE = 'HoustonPatchbay'
+        THEME_PATH = Path(SUBMODULE) / 'themes'
+        source_theme_path = Path(get_code_root()) / THEME_PATH
+        theme_paths = list[Path]()
+        
+        app_title = QApplication.applicationName().lower()
+        
+        theme_paths.append(xdg.xdg_data_home() / app_title / THEME_PATH)
+
+        if source_theme_path.exists():
+            theme_paths.append(source_theme_path)
+
+        for p in xdg.xdg_data_dirs():
+            path = p / app_title / THEME_PATH
+            if path not in theme_paths:
+                theme_paths.append(path)
 
         if TYPE_CHECKING:
             assert isinstance(self.main_win, MainWindow)
 
-        self.app_init(self.main_win.ui.graphicsView, source_theme_path,
+        self.app_init(self.main_win.ui.graphicsView,
+                      theme_paths,
                       callbacker=PatchanceCallbacker(self),
                       default_theme_name='Yellow Boards')
 

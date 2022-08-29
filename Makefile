@@ -102,6 +102,8 @@ install:
 	install -d $(DESTDIR)$(PREFIX)/share/applications/
 	install -d $(DEST_PATCHANCE)/
 	install -d $(DEST_PATCHANCE)/locale/
+	install -d $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
+	install -d $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/locale
 	
 # 	# Copy Desktop Files
 	install -m 644 data/share/applications/*.desktop \
@@ -129,13 +131,13 @@ install:
 	install -m 644 resources/main_icon/scalable/patchance.svg \
 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 
+	# Copy patchbay themes
+	cp -r HoustonPatchbay/themes $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
+
 # 	# Install main code
 	cp -r src $(DEST_PATCHANCE)/
-	cp -r $(PATCHBAY_DIR) $(DEST_PATCHANCE)/
 	rm $(DEST_PATCHANCE)/src/patchbay
 	cp -r $(PATCHBAY_DIR)/patchbay $(DEST_PATCHANCE)/src/
-
-	$(LINK) $(DEST_PATCHANCE)/src/patchance.py $(DESTDIR)$(PREFIX)/bin/patchance
 	
 # 	# compile python files
 	$(PYTHON) -m compileall $(DEST_PATCHANCE)/src/
@@ -143,15 +145,13 @@ install:
 # 	# install local manual
 # 	cp -r manual $(DEST_PATCHANCE)/
 		
-# 	# install main bash scripts to bin
+#   # install main bash scripts to bin
 	install -m 755 data/patchance  $(DESTDIR)$(PREFIX)/bin/
-	
-# 	# modify PREFIX in main bash scripts
-	sed -i "s?X-PREFIX-X?$(PREFIX)?" \
-		$(DESTDIR)$(PREFIX)/bin/patchance
+	sed -i "s?X-PREFIX-X?$(PREFIX)?" $(DESTDIR)$(PREFIX)/bin/patchance
 
 # 	# Install Translations
-#	# install -m 644 locale/*.qm $(DEST_PATCHANCE)/locale/
+	# install -m 644 locale/*.qm $(DEST_PATCHANCE)/locale/
+	install -m 644 $(PATCHBAY_DIR)/locale/*.qm $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/locale/
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/patchance
