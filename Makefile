@@ -29,7 +29,7 @@ PATCHBAY_DIR=HoustonPatchbay
 
 # ---------------------
 
-all: PATCHBAY UI RES
+all: PATCHBAY UI RES LOCALE
 
 PATCHBAY:
 	@(cd $(PATCHBAY_DIR) && $(MAKE))
@@ -150,7 +150,7 @@ install:
 	sed -i "s?X-PREFIX-X?$(PREFIX)?" $(DESTDIR)$(PREFIX)/bin/patchance
 
 # 	# Install Translations
-	# install -m 644 locale/*.qm $(DEST_PATCHANCE)/locale/
+	install -m 644 locale/*.qm $(DEST_PATCHANCE)/locale/
 	install -m 644 $(PATCHBAY_DIR)/locale/*.qm $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/locale/
 
 uninstall:
