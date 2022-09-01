@@ -5,7 +5,7 @@ It is a direct alternative to [Catia](https://github.com/falkTX/Catia) or [Patch
 
 ![Screenshot](https://raw.githubusercontent.com/Houston4444/Patchance/master/screenshots/yellow_boards.png)
 
-Features:
+## Features:
 * Stereo detection for port grouping with their name, for faster connections and readability
 * Wrap/Unwrap boxes to can hide things you don't need
 * Prevent the boxes from overlapping
@@ -23,3 +23,8 @@ As [RaySession](https://github.com/Houston4444/RaySession), it is based on the [
 __RaySession__ users won't find any interest to use __Patchance__, __Patchance__ is for theses ones who think they don't need this session manager.
 
 It is a simple app for __HoustonPatchbay__ and it shows the possibility for any python Qt app to implement this submodule easily.
+
+## History
+
+__Patchance__ is not directly a __Catia__ fork, but it comes from.
+Originally, the _patchanvas_ module (present in HousPatchbay submodule) has been copied from __Carla__ code. This module was previously copied by @falkTX from __Cadence__ (containing __Catia__ ) to __Carla__.
