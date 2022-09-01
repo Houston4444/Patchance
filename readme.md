@@ -24,6 +24,14 @@ __RaySession__ users won't find any interest to use __Patchance__, __Patchance__
 
 It is a simple app for __HoustonPatchbay__ and it shows the possibility for any python Qt app to implement this submodule easily.
 
+## Goals
+
+No mystery, the main goal of this software is too show to other devs the possibility to embbed the [HoustonPatchbay](https://github.com/Houston4444/HoustonPatchbay) submodule. Then, if someone has the motivation to implement new features, I still have [many ideas](https://github.com/Houston4444/HoustonPatchbay/plans.md).
+
+Users can easily and quickly write patchbay themes, there are surely others who are better at creating beautiful things than I am.
+
+I think this is also a good approach for first-time users, before they realise that using a session manager makes life easier.
+
 ## History
 
 __Patchance__ is not directly a __Catia__ fork, but it comes from.
