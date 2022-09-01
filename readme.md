@@ -9,11 +9,11 @@ It is a direct alternative to [Catia](https://github.com/falkTX/Catia) or [Patch
 * Stereo detection for port grouping with their name, for faster connections and readability
 * Wrap/Unwrap boxes to can hide things you don't need
 * Prevent the boxes from overlapping
-* Search a box with pattern
+* Search a box with a pattern
 * Connection with double click for easier touchpad use
 * Connection from context menu
-* Editable theme
-* show only Audio or only MIDI
+* Editable themes (9 Themes embedded)
+* show only Audio, only MIDI, or only CV ports
 * Transport controls
 * Customizable tool bar
 * many others...
