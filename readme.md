@@ -26,7 +26,7 @@ It is a simple app for __HoustonPatchbay__ and it shows the possibility for any 
 
 ## Goals
 
-No mystery, the main goal of this software is too show to other devs the possibility to embbed the [HoustonPatchbay](https://github.com/Houston4444/HoustonPatchbay) submodule. Then, if someone has the motivation to implement new features, I still have [many ideas](https://github.com/Houston4444/HoustonPatchbay/blob/main/plans.md).
+No mystery, the main goal of this software is too show to other devs the possibility to embbed the [HoustonPatchbay](https://github.com/Houston4444/HoustonPatchbay) submodule. Then, if someone has the motivation to implement new features, it is really welcome, I still have [many ideas](https://github.com/Houston4444/HoustonPatchbay/blob/main/plans.md).
 
 Users can easily and quickly write patchbay themes, there are surely others who are better at creating beautiful things than I am.
 
