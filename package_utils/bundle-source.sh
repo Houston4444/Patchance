@@ -4,6 +4,8 @@
 # This script allows to make a release tarball including submodules (here HoustonPatchbay).
 # It allows easier release download for user, and easier packaging.
 
+cd package_utils
+
 PROJECT_VERSION="$(git describe --abbrev=0 2>/dev/null)"
 
 if [[ -z "$PROJECT_VERSION" ]]; then
@@ -36,6 +38,6 @@ cd ..
 tar -zcvf "../dist/$TARBALL_NAME" "$SRCDIR"
 rm -rf "$SRCDIR"
 
-gpg --armor --detach-sign --yes "../dist/$TARBALL_NAME"
+# gpg --armor --detach-sign --yes "../dist/$TARBALL_NAME"
 cd ..
 ls -l dist
