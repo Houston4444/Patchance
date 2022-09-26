@@ -11,9 +11,6 @@ if [[ -z "$PROJECT_VERSION" ]]; then
     exit 1
 fi
 
-echo 'ok ce parti'
-echo $PROJECT_VERSION
-
 set -e
 
 CHECKOUT=`dirname "$(pwd)"` 
@@ -23,34 +20,22 @@ PROJECT_NAME="${PROJECT_NAME%.git}"
 SRCDIR="$PROJECT_NAME-${PROJECT_VERSION#v}"
 TARBALL_NAME="$SRCDIR-source.tar.gz"
 
-echo gogogo
-
 mkdir -p build dist
 cd build
 rm -rf "$SRCDIR"
 
-echo 'gnoanogo'
-echo --- $CHECKOUT
-echo --- $SRCDIR
-
 git clone --recursive --branch "$PROJECT_VERSION" --single-branch "$CHECKOUT" "$SRCDIR"
-
-echo 'poplld'
 
 cd "$SRCDIR"
 for fn in .git .gitmodules .gitignore; do
     find . -name $fn -type f -print0 | xargs -0 rm -f
 done
 
-echo 'pddpdm'
-
 rm -rf .git
 cd ..
 tar -zcvf "../dist/$TARBALL_NAME" "$SRCDIR"
 rm -rf "$SRCDIR"
 
-echo slohoo
-
-# gpg --armor --detach-sign --yes "../dist/$TARBALL_NAME"
+gpg --armor --detach-sign --yes "../dist/$TARBALL_NAME"
 cd ..
 ls -l dist
