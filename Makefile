@@ -131,8 +131,9 @@ install:
 	install -m 644 resources/main_icon/scalable/patchance.svg \
 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 
-	# Copy patchbay themes
+#	# Copy patchbay themes
 	cp -r HoustonPatchbay/themes $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
+	cp -r HoustonPatchbay/manual $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
 
 # 	# Install main code
 	cp -r src $(DEST_PATCHANCE)/
