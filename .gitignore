@@ -24,3 +24,7 @@
 /src/*/*/__pycache__/*
 /local_jacklib/__pycache__/*
 /jacklib/__pycache__/*
+
+#package_utils
+/package_utils/dist/*
+/package_utils/build/*
