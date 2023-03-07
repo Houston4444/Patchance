@@ -23,19 +23,33 @@ for arg in sys.argv[1:]:
         sys.exit(0)
 
 
+from typing import Optional
 import signal
 import logging
 
 from dataclasses import dataclass
 from os.path import dirname
 
+
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon, QFontDatabase
 from PyQt5.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings
 
+# try:
+from pyalsa.alsaseq import SEQ_LIB_VERSION_STR
+ALSA_VERSION_LIST = [int(num) for num in SEQ_LIB_VERSION_STR.split('.')]
+assert ALSA_VERSION_LIST >= [1, 2, 4]
+ALSA_LIB_OK = True
+# except:
+#     ALSA_LIB_OK = False
+    
+print('ALSA_LIB_OK', ALSA_LIB_OK)
+
 from main_win import MainWindow
 from patchance_pb_manager import PatchancePatchbayManager
 from jack_manager import JackManager
+if ALSA_LIB_OK:
+    from alsa_manager import AlsaManager
 
 
 @dataclass
@@ -44,6 +58,7 @@ class Main:
     main_win: MainWindow
     patchbay_manager: PatchancePatchbayManager
     jack_manager: JackManager
+    alsa_manager: 'Optional[AlsaManager]'
     settings: QSettings
 
 
@@ -107,8 +122,18 @@ def main_loop():
     main_win = MainWindow()
     pb_manager = PatchancePatchbayManager(settings)
     jack_manager = JackManager(pb_manager)
+    alsa_manager = None
+    
+    if ALSA_LIB_OK:
+        alsa_manager = AlsaManager(pb_manager)
+        alsa_manager.add_all_ports()
 
-    main = Main(app, main_win, pb_manager, jack_manager, settings)
+    main = Main(app,
+                main_win,
+                pb_manager,
+                jack_manager,
+                alsa_manager,
+                settings)
     pb_manager.finish_init(main)
     main_win.finish_init(main)
     main_win.show()
