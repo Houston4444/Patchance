@@ -13,6 +13,7 @@ from patchbay import (
     Callbacker,
     CanvasOptionsDialog,
     PatchbayManager)
+from patchbay.patchcanvas.init_values import PortType
 
 from tools import get_code_root
 import xdg
@@ -40,6 +41,11 @@ class PatchanceCallbacker(Callbacker):
         if port_out is None or port_in is None:
             return
         
+        if port_out.type is PortType.MIDI_ALSA:
+            if self.mng.alsa_mng is None:
+                return
+        
+            self.mng.alsa_mng.connect_ports(port_out.full_name, port_in.full_name)
         if self.mng.jack_mng is None:
             return
         
@@ -48,9 +54,19 @@ class PatchanceCallbacker(Callbacker):
     def _ports_disconnect(self, connection_id: int):
         for conn in self.mng.connections:
             if conn.connection_id == connection_id:
+                if conn.port_type() is PortType.MIDI_ALSA:
+                    if self.mng.alsa_mng is None:
+                        return
+                    
+                    self.mng.alsa_mng.connect_ports(
+                        conn.port_out.full_name,
+                        conn.port_in.full_name,
+                        disconnect=True)
+                    return
+
                 self.mng.jack_mng.disconnect_ports(
                     conn.port_out.full_name, conn.port_in.full_name)
-                break
+                return
 
 
 class PatchancePatchbayManager(PatchbayManager):
@@ -142,6 +158,7 @@ class PatchancePatchbayManager(PatchbayManager):
 
     def finish_init(self, main: 'Main'):
         self.jack_mng = main.jack_manager
+        self.alsa_mng = main.alsa_manager
         self.set_main_win(main.main_win)
         self._setup_canvas()
 

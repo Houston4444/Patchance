@@ -20,7 +20,8 @@ from pyalsa.alsaseq import (
     SEQ_EVENT_PORT_START,
     SEQ_EVENT_PORT_EXIT,
     SEQ_EVENT_PORT_SUBSCRIBED,
-    SEQ_EVENT_PORT_UNSUBSCRIBED
+    SEQ_EVENT_PORT_UNSUBSCRIBED,
+    SequencerError
 )
 from patchbay.base_elements import JackPortFlag, PortType
 
@@ -95,18 +96,6 @@ class AlsaManager:
             (SEQ_CLIENT_SYSTEM, SEQ_PORT_SYSTEM_ANNOUNCE),
             (self.seq.client_id, input_id))
 
-    def get_client(self, name):
-        if name in self._clients.keys():
-            return self._clients[name]
-        # TODO some log
-    
-    def get_port(self, client: AlsaClient, port_name: str) -> AlsaPort:
-        if port_name in client.ports:
-            return client.ports[port_name]
-        else:
-            # TODO some log
-            pass
-
     def get_the_graph(self):
         if self.seq is None:
             return
@@ -126,32 +115,11 @@ class AlsaManager:
                 self._clients[client_id].add_port(port_id)
       
                 connections = connection_list[0]
-                # print(client_id, client_name, ':', port_name)
                 for connection in connections:
-                    conn_client_id, conn_port_id = connection[:2]
-                    
+                    conn_client_id, conn_port_id = connection[:2]                    
                     self._active_connections.append(
-                        AlsaConn(client_id, port_id, conn_client_id, conn_port_id))
-                    
-                    # self._patchbay_manager.add_connection(
-                    #     f"ALSA_OUT:{client_name}:{port_name}",
-                    #     f"ALSA_IN:{conn_client.name}:{conn_port.name}"
-                    # )
-            # for port_tuple in port_list:
-            #     port_name, port_id, connection_list = port_tuple
-            #     port_info = self.seq.get_port_info(port_id, client_id)
-            #     caps = port_info['capability']
-            #     if caps & SEQ_PORT_CAP_NO_EXPORT:
-            #         continue
-
-            #     if not(caps & _PORT_READS == _PORT_READS
-            #            or caps & _PORT_WRITES == _PORT_WRITES):
-            #         continue
-
-            #     connections = connection_list[0]
-            #     for connection in connections:
-            #         self._active_connections.append(
-            #             (client_id, port_id, connection[0], connection[1]))
+                        AlsaConn(client_id, port_id,
+                                 conn_client_id, conn_port_id))
 
     def add_port_to_patchbay(self, client: AlsaClient, port: AlsaPort):
         port_flags = 0
@@ -206,7 +174,51 @@ class AlsaManager:
                 f"ALSA_IN:{dest_client.name}:{dest_port.name}")
 
         self._event_thread.start()
-                    
+    
+    def connect_ports(self, port_out_name: str, port_in_name: str,
+                      disconnect=False):
+        alsa_in_out, src_client_name, *rest = port_out_name.split(':')
+        src_port_name = ':'.join(rest)
+        alsa_in_out, dest_client_name, *rest = port_in_name.split(':')
+        dest_port_name = ':'.join(rest)
+        
+        port_out_name = port_out_name.replace('ALSA_OUT:', '', 1)
+        port_in_name = port_in_name.replace('ALSA_IN:', '', 1)
+
+        for src_client_id, src_client in self._clients.items():
+            if src_client.name == src_client_name:
+                break
+        else:
+            return
+        
+        for src_port_id, src_port in src_client.ports.items():
+            if src_port.name == src_port_name:
+                break
+        else:
+            return
+        
+        for dest_client_id, dest_client in self._clients.items():
+            if dest_client.name == dest_client_name:
+                break
+        else:
+            return
+        
+        for dest_port_id, dest_port in dest_client.ports.items():
+            if dest_port.name == dest_port_name:
+                break
+        else:
+            return
+        
+        if disconnect:
+            self.seq.disconnect_ports(
+                (src_client_id, src_port_id),
+                (dest_client_id, dest_port_id))
+        else: 
+            self.seq.connect_ports(
+                (src_client_id, src_port_id),
+                (dest_client_id, dest_port_id),
+                0, 0, 0, 0)
+        
     def read_events(self):
         while True:
             if self._stopping:
@@ -267,7 +279,7 @@ class AlsaManager:
                     
                     if sender_port is None or dest_port is None:
                         continue
-                    
+
                     self._patchbay_manager.add_connection(
                         f"ALSA_OUT:{sender_client.name}:{sender_port.name}",
                         f"ALSA_IN:{dest_client.name}:{dest_port.name}")
