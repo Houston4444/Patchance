@@ -64,6 +64,8 @@ class Main:
 
 def signal_handler(sig, frame):
     if sig in (signal.SIGINT, signal.SIGTERM):
+        if main.alsa_manager is not None:
+            main.alsa_manager.stop_events_loop()
         QApplication.quit()
 
 def get_code_root():
@@ -78,6 +80,8 @@ def make_logger():
     logger.addHandler(log_handler)
 
 def main_loop():
+    global main
+    
     make_logger()
     
     import resources_rc
