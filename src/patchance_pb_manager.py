@@ -136,9 +136,15 @@ class PatchancePatchbayManager(PatchbayManager):
                       default_theme_name='Yellow Boards')
 
     def refresh(self):
+        if self.alsa_mng is not None:
+            self.alsa_mng.stop_events_loop()
+        
         super().refresh()
         if self.jack_mng is not None:
             self.jack_mng.init_the_graph()
+        
+        if self.alsa_mng is not None:
+            self.alsa_mng.add_all_ports()
     
     def change_buffersize(self, buffer_size: int):
         super().change_buffersize(buffer_size)
@@ -159,15 +165,11 @@ class PatchancePatchbayManager(PatchbayManager):
     def set_alsa_midi_enabled(self, yesno: int):
         if self.alsa_mng is not None:    
             if yesno:
-                print('regooo')
                 self.alsa_mng.add_all_ports()
             else:
                 self.alsa_mng.stop_events_loop()
         
         super().set_alsa_midi_enabled(yesno)
-        # if self.alsa_midi_enabled != bool(yesno):
-        #     self.alsa_midi_enabled = bool(yesno)
-        #     self.change_port_types_view(PortTypesViewFlag.ALL, force=True)
 
     def finish_init(self, main: 'Main'):
         self.jack_mng = main.jack_manager

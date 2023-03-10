@@ -129,13 +129,13 @@ class AlsaManager:
         
         if port.caps & _PORT_READS == _PORT_READS:
             self._patchbay_manager.add_port(
-                f'ALSA_OUT:{client.name}:{port.name}',
+                f':ALSA_OUT:{client.name}:{port.name}',
                 PortType.MIDI_ALSA,
                 port_flags | JackPortFlag.IS_OUTPUT,
                 client.id * 0x10000 + port.id)
         if port.caps & _PORT_WRITES == _PORT_WRITES:
             self._patchbay_manager.add_port(
-                f'ALSA_IN:{client.name}:{port.name}',
+                f':ALSA_IN:{client.name}:{port.name}',
                 PortType.MIDI_ALSA,
                 port_flags | JackPortFlag.IS_INPUT,
                 client.id * 0x10000 + port.id)
@@ -143,10 +143,10 @@ class AlsaManager:
     def remove_port_from_patchbay(self, client: AlsaClient, port: AlsaPort):
         if port.caps & _PORT_READS == _PORT_READS:
             self._patchbay_manager.remove_port(
-                f"ALSA_OUT:{client.name}:{port.name}")
+                f":ALSA_OUT:{client.name}:{port.name}")
         if port.caps & _PORT_WRITES == _PORT_WRITES:
             self._patchbay_manager.remove_port(
-                f"ALSA_IN:{client.name}:{port.name}")
+                f":ALSA_IN:{client.name}:{port.name}")
 
     def add_all_ports(self):
         self.get_the_graph()
@@ -173,8 +173,8 @@ class AlsaManager:
             self._connections.append(conn)
             
             self._patchbay_manager.add_connection(
-                f"ALSA_OUT:{source_client.name}:{source_port.name}",
-                f"ALSA_IN:{dest_client.name}:{dest_port.name}")
+                f":ALSA_OUT:{source_client.name}:{source_port.name}",
+                f":ALSA_IN:{dest_client.name}:{dest_port.name}")
 
         self._event_thread.start()
     
@@ -185,8 +185,8 @@ class AlsaManager:
         alsa_key, dest_client_name, *rest = port_in_name.split(':')
         dest_port_name = ':'.join(rest)
         
-        port_out_name = port_out_name.replace('ALSA_OUT:', '', 1)
-        port_in_name = port_in_name.replace('ALSA_IN:', '', 1)
+        port_out_name = port_out_name.replace(':ALSA_OUT:', '', 1)
+        port_in_name = port_in_name.replace(':ALSA_IN:', '', 1)
 
         for src_client_id, src_client in self._clients.items():
             if src_client.name == src_client_name:
@@ -272,6 +272,7 @@ class AlsaManager:
                     self.remove_port_from_patchbay(client, port)
                     
                 elif event.type == SEQ_EVENT_PORT_SUBSCRIBED:
+                    print('mmsleee', data)
                     sender_client = self._clients.get(data['connect.sender.client'])
                     dest_client = self._clients.get(data['connect.dest.client'])
                     if sender_client is None or dest_client is None:
@@ -288,10 +289,11 @@ class AlsaManager:
                                  dest_client.id, dest_port.id))
 
                     self._patchbay_manager.add_connection(
-                        f"ALSA_OUT:{sender_client.name}:{sender_port.name}",
-                        f"ALSA_IN:{dest_client.name}:{dest_port.name}")
+                        f":ALSA_OUT:{sender_client.name}:{sender_port.name}",
+                        f":ALSA_IN:{dest_client.name}:{dest_port.name}")
                     
                 elif event.type == SEQ_EVENT_PORT_UNSUBSCRIBED:
+                    print('trouubbe', data)
                     sender_client = self._clients.get(data['connect.sender.client'])
                     dest_client = self._clients.get(data['connect.dest.client'])
                     if sender_client is None or dest_client is None:
@@ -312,8 +314,8 @@ class AlsaManager:
                             break 
 
                     self._patchbay_manager.remove_connection(
-                        f"ALSA_OUT:{sender_client.name}:{sender_port.name}",
-                        f"ALSA_IN:{dest_client.name}:{dest_port.name}")
+                        f":ALSA_OUT:{sender_client.name}:{sender_port.name}",
+                        f":ALSA_IN:{dest_client.name}:{dest_port.name}")
                 
     def stop_events_loop(self):
         self._stopping = True
@@ -325,6 +327,7 @@ class AlsaManager:
                 self.remove_port_from_patchbay(client, port)
         
         del self._event_thread
+        self._stopping = False
         self._event_thread = Thread(target=self.read_events)
     
     
