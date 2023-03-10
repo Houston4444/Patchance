@@ -156,6 +156,19 @@ class PatchancePatchbayManager(PatchbayManager):
     def transport_relocate(self, frame: int):
         self.jack_mng.transport_relocate(frame)
 
+    def set_alsa_midi_enabled(self, yesno: int):
+        if self.alsa_mng is not None:    
+            if yesno:
+                print('regooo')
+                self.alsa_mng.add_all_ports()
+            else:
+                self.alsa_mng.stop_events_loop()
+        
+        super().set_alsa_midi_enabled(yesno)
+        # if self.alsa_midi_enabled != bool(yesno):
+        #     self.alsa_midi_enabled = bool(yesno)
+        #     self.change_port_types_view(PortTypesViewFlag.ALL, force=True)
+
     def finish_init(self, main: 'Main'):
         self.jack_mng = main.jack_manager
         self.alsa_mng = main.alsa_manager

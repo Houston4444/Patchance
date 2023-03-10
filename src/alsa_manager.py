@@ -77,7 +77,8 @@ class AlsaManager:
         self._patchbay_manager = patchbay_manager
         self.seq = alsaseq.Sequencer(clientname='patchance')
 
-        self._active_connections = list[AlsaConn]()
+        self._all_alsa_connections = list[AlsaConn]()
+        self._connections = list[AlsaConn]()
         self._clients = dict[int, AlsaClient]()
         self._clients_names = dict[int, str]()
         
@@ -104,7 +105,7 @@ class AlsaManager:
         
         self._clients_names.clear()
         self._clients.clear()
-        self._active_connections.clear()
+        self._all_alsa_connections.clear()
 
         for client in clients:
             client_name, client_id, port_list = client
@@ -117,7 +118,7 @@ class AlsaManager:
                 connections = connection_list[0]
                 for connection in connections:
                     conn_client_id, conn_port_id = connection[:2]                    
-                    self._active_connections.append(
+                    self._all_alsa_connections.append(
                         AlsaConn(client_id, port_id,
                                  conn_client_id, conn_port_id))
 
@@ -157,7 +158,7 @@ class AlsaManager:
             for port in client.ports.values():
                 self.add_port_to_patchbay(client, port)
                 
-        for conn in self._active_connections:
+        for conn in self._all_alsa_connections:
             source_client = self._clients.get(conn.source_client_id)
             dest_client = self._clients.get(conn.dest_client_id)
             if source_client is None or dest_client is None:
@@ -169,6 +170,8 @@ class AlsaManager:
             if source_port is None or dest_port is None:
                 continue
             
+            self._connections.append(conn)
+            
             self._patchbay_manager.add_connection(
                 f"ALSA_OUT:{source_client.name}:{source_port.name}",
                 f"ALSA_IN:{dest_client.name}:{dest_port.name}")
@@ -177,9 +180,9 @@ class AlsaManager:
     
     def connect_ports(self, port_out_name: str, port_in_name: str,
                       disconnect=False):
-        alsa_in_out, src_client_name, *rest = port_out_name.split(':')
+        alsa_key, src_client_name, *rest = port_out_name.split(':')
         src_port_name = ':'.join(rest)
-        alsa_in_out, dest_client_name, *rest = port_in_name.split(':')
+        alsa_key, dest_client_name, *rest = port_in_name.split(':')
         dest_port_name = ':'.join(rest)
         
         port_out_name = port_out_name.replace('ALSA_OUT:', '', 1)
@@ -280,6 +283,10 @@ class AlsaManager:
                     if sender_port is None or dest_port is None:
                         continue
 
+                    self._connections.append(
+                        AlsaConn(sender_client.id, sender_port.id,
+                                 dest_client.id, dest_port.id))
+
                     self._patchbay_manager.add_connection(
                         f"ALSA_OUT:{sender_client.name}:{sender_port.name}",
                         f"ALSA_IN:{dest_client.name}:{dest_port.name}")
@@ -296,6 +303,14 @@ class AlsaManager:
                     if sender_port is None or dest_port is None:
                         continue
                     
+                    for conn in self._connections:
+                        if (conn.source_client_id == sender_client.id
+                                and conn.source_port_id == sender_port.id
+                                and conn.dest_client_id == dest_client.id
+                                and conn.dest_port_id == dest_port.id):
+                            self._connections.remove(conn)
+                            break 
+
                     self._patchbay_manager.remove_connection(
                         f"ALSA_OUT:{sender_client.name}:{sender_port.name}",
                         f"ALSA_IN:{dest_client.name}:{dest_port.name}")
@@ -303,3 +318,13 @@ class AlsaManager:
     def stop_events_loop(self):
         self._stopping = True
         
+        self._event_thread.join()
+        
+        for client in self._clients.values():
+            for port in client.ports.values():
+                self.remove_port_from_patchbay(client, port)
+        
+        del self._event_thread
+        self._event_thread = Thread(target=self.read_events)
+    
+    
