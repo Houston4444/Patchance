@@ -180,9 +180,9 @@ class AlsaManager:
     
     def connect_ports(self, port_out_name: str, port_in_name: str,
                       disconnect=False):
-        alsa_key, src_client_name, *rest = port_out_name.split(':')
+        _, alsa_key, src_client_name, *rest = port_out_name.split(':')
         src_port_name = ':'.join(rest)
-        alsa_key, dest_client_name, *rest = port_in_name.split(':')
+        _, alsa_key, dest_client_name, *rest = port_in_name.split(':')
         dest_port_name = ':'.join(rest)
         
         port_out_name = port_out_name.replace(':ALSA_OUT:', '', 1)
