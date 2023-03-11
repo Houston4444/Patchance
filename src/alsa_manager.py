@@ -1,8 +1,7 @@
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from threading import Thread
-
     
 from pyalsa import alsaseq
 from pyalsa.alsaseq import (
@@ -32,6 +31,7 @@ if TYPE_CHECKING:
 _PORT_READS = SEQ_PORT_CAP_READ | SEQ_PORT_CAP_SUBS_READ
 _PORT_WRITES = SEQ_PORT_CAP_WRITE | SEQ_PORT_CAP_SUBS_WRITE
 
+
 @dataclass
 class AlsaPort:
     name: str
@@ -59,8 +59,12 @@ class AlsaClient:
         return f"AlsaClient({self.name}, {self.id})"
     
     def add_port(self, port_id: int):
-        port_info = self.alsa_mng.seq.get_port_info(port_id, self.id)
-        caps = port_info['capability']
+        try:
+            port_info = self.alsa_mng.seq.get_port_info(port_id, self.id)
+            caps = port_info['capability']
+        except:
+            return
+
         if caps & SEQ_PORT_CAP_NO_EXPORT:
             return
         
@@ -212,15 +216,19 @@ class AlsaManager:
         else:
             return
         
-        if disconnect:
-            self.seq.disconnect_ports(
-                (src_client_id, src_port_id),
-                (dest_client_id, dest_port_id))
-        else: 
-            self.seq.connect_ports(
-                (src_client_id, src_port_id),
-                (dest_client_id, dest_port_id),
-                0, 0, 0, 0)
+        try:
+            if disconnect:
+                self.seq.disconnect_ports(
+                    (src_client_id, src_port_id),
+                    (dest_client_id, dest_port_id))
+            else: 
+                self.seq.connect_ports(
+                    (src_client_id, src_port_id),
+                    (dest_client_id, dest_port_id),
+                    0, 0, 0, 0)
+        except:
+            # TODO log something
+            pass
         
     def read_events(self):
         while True:
@@ -233,8 +241,12 @@ class AlsaManager:
                 data = event.get_data()
 
                 if event.type == SEQ_EVENT_CLIENT_START:
-                    client_id = data['addr.client']
-                    client_info = self.seq.get_client_info(client_id)
+                    try:
+                        client_id = data['addr.client']
+                        client_info = self.seq.get_client_info(client_id)
+                    except:
+                        continue
+
                     self._clients[client_id] = AlsaClient(
                         self, client_info['name'], client_id)
                 elif event.type == SEQ_EVENT_CLIENT_EXIT:
@@ -272,7 +284,6 @@ class AlsaManager:
                     self.remove_port_from_patchbay(client, port)
                     
                 elif event.type == SEQ_EVENT_PORT_SUBSCRIBED:
-                    print('mmsleee', data)
                     sender_client = self._clients.get(data['connect.sender.client'])
                     dest_client = self._clients.get(data['connect.dest.client'])
                     if sender_client is None or dest_client is None:
@@ -293,7 +304,6 @@ class AlsaManager:
                         f":ALSA_IN:{dest_client.name}:{dest_port.name}")
                     
                 elif event.type == SEQ_EVENT_PORT_UNSUBSCRIBED:
-                    print('trouubbe', data)
                     sender_client = self._clients.get(data['connect.sender.client'])
                     dest_client = self._clients.get(data['connect.dest.client'])
                     if sender_client is None or dest_client is None:
