@@ -33,3 +33,11 @@ The required build dependencies are: <i>(devel packages of these)</i>
 
 On Debian and Ubuntu, use these commands to install all build dependencies: <br/>
 `$ sudo apt-get install python3-pyqt5 pyqt5-dev-tools qtchooser qttools5-dev-tools`
+
+===== RUNTIME DEPENDENCIES =====
+---------------------------------
+If you want to provide ALSA MIDI ports, you must have the python3-pyalsa lib with version >= 1.2.4.
+
+On Debian and Ubuntu, use these commands to install this optional dependency: <br/>
+`$ sudo apt-get install python3-pyalsa`
+But note that it may be not enough if the version provided by your system is too old.

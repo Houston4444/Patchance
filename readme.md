@@ -1,6 +1,6 @@
 # ![Patchance Logo](https://raw.githubusercontent.com/Houston4444/Patchance/master/resources/main_icon/128x128/patchance.png) Patchance
 
-Patchance is one more JACK patchbay GUI for GNU/Linux systems, but it could be adapted to Mac and Windows with little effort.
+Patchance is one more JACK patchbay GUI for GNU/Linux systems, but it could be adapted to Mac and Windows with little effort. It also can provide ALSA MIDI ports.
 It is a direct alternative to [Catia](https://github.com/falkTX/Catia) or [Patchage](https://github.com/drobilla/patchage).
 
 ![Screenshot](https://raw.githubusercontent.com/Houston4444/Patchance/master/screenshots/yellow_boards.png)
@@ -13,7 +13,7 @@ It is a direct alternative to [Catia](https://github.com/falkTX/Catia) or [Patch
 * Connection with double click for easier touchpad use
 * Connection from context menu
 * Editable themes (9 Themes embedded)
-* show only Audio, only MIDI, or only CV ports
+* show only Audio, only MIDI, or only CV ports (or ALSA MIDI)
 * Transport controls
 * Customizable tool bar
 * many others...
