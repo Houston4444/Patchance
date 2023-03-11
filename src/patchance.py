@@ -35,15 +35,13 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon, QFontDatabase
 from PyQt5.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings
 
-# try:
-from pyalsa.alsaseq import SEQ_LIB_VERSION_STR
-ALSA_VERSION_LIST = [int(num) for num in SEQ_LIB_VERSION_STR.split('.')]
-assert ALSA_VERSION_LIST >= [1, 2, 4]
-ALSA_LIB_OK = True
-# except:
-#     ALSA_LIB_OK = False
-    
-print('ALSA_LIB_OK', ALSA_LIB_OK)
+try:
+    from pyalsa.alsaseq import SEQ_LIB_VERSION_STR
+    ALSA_VERSION_LIST = [int(num) for num in SEQ_LIB_VERSION_STR.split('.')]
+    assert ALSA_VERSION_LIST >= [1, 2, 4]
+    ALSA_LIB_OK = True
+except:
+    ALSA_LIB_OK = False
 
 from main_win import MainWindow
 from patchance_pb_manager import PatchancePatchbayManager
@@ -64,8 +62,6 @@ class Main:
 
 def signal_handler(sig, frame):
     if sig in (signal.SIGINT, signal.SIGTERM):
-        if main.alsa_manager is not None:
-            main.alsa_manager.stop_events_loop()
         QApplication.quit()
 
 def get_code_root():
@@ -126,11 +122,13 @@ def main_loop():
     main_win = MainWindow()
     pb_manager = PatchancePatchbayManager(settings)
     jack_manager = JackManager(pb_manager)
-    alsa_manager = None
     
     if ALSA_LIB_OK:
         alsa_manager = AlsaManager(pb_manager)
-        alsa_manager.add_all_ports()
+        if settings.value('Canvas/alsa_midi_enabled', False, type=bool):
+            alsa_manager.add_all_ports()
+    else:
+        alsa_manager = None
 
     main = Main(app,
                 main_win,
@@ -138,12 +136,18 @@ def main_loop():
                 jack_manager,
                 alsa_manager,
                 settings)
+
     pb_manager.finish_init(main)
+    if not ALSA_LIB_OK:
+        pb_manager.options_dialog.enable_alsa_midi(False)
+    
     main_win.finish_init(main)
     main_win.show()
 
     app.exec()
     settings.sync()
+    if alsa_manager is not None:
+        alsa_manager.stop_events_loop()
     jack_manager.exit()
     pb_manager.save_positions()
     del app

@@ -136,9 +136,6 @@ class PatchancePatchbayManager(PatchbayManager):
                       default_theme_name='Yellow Boards')
 
     def refresh(self):
-        if self.alsa_mng is not None:
-            self.alsa_mng.stop_events_loop()
-        
         super().refresh()
         if self.jack_mng is not None:
             self.jack_mng.init_the_graph()

@@ -153,6 +153,9 @@ class AlsaManager:
                 f":ALSA_IN:{client.name}:{port.name}")
 
     def add_all_ports(self):
+        if self._event_thread.is_alive():
+            self.stop_events_loop()
+
         self.get_the_graph()
 
         for client in self._clients.values():
@@ -179,7 +182,7 @@ class AlsaManager:
             self._patchbay_manager.add_connection(
                 f":ALSA_OUT:{source_client.name}:{source_port.name}",
                 f":ALSA_IN:{dest_client.name}:{dest_port.name}")
-
+            
         self._event_thread.start()
     
     def connect_ports(self, port_out_name: str, port_in_name: str,
@@ -302,19 +305,19 @@ class AlsaManager:
                     self._patchbay_manager.add_connection(
                         f":ALSA_OUT:{sender_client.name}:{sender_port.name}",
                         f":ALSA_IN:{dest_client.name}:{dest_port.name}")
-                    
+
                 elif event.type == SEQ_EVENT_PORT_UNSUBSCRIBED:
                     sender_client = self._clients.get(data['connect.sender.client'])
                     dest_client = self._clients.get(data['connect.dest.client'])
                     if sender_client is None or dest_client is None:
                         continue
-                    
+
                     sender_port = sender_client.ports.get(data['connect.sender.port'])
                     dest_port = dest_client.ports.get(data['connect.dest.port'])
-                    
+
                     if sender_port is None or dest_port is None:
                         continue
-                    
+
                     for conn in self._connections:
                         if (conn.source_client_id == sender_client.id
                                 and conn.source_port_id == sender_port.id
@@ -328,8 +331,10 @@ class AlsaManager:
                         f":ALSA_IN:{dest_client.name}:{dest_port.name}")
                 
     def stop_events_loop(self):
+        if not self._event_thread.is_alive():
+            return
+
         self._stopping = True
-        
         self._event_thread.join()
         
         for client in self._clients.values():
