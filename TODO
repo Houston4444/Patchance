@@ -4,11 +4,11 @@ voir trad
 
 MIDI ALSA
 
-remplacer ALSA_IN ALSA_OUT par :ALSA_IN :ALSA_OUT
+# remplacer ALSA_IN ALSA_OUT par :ALSA_IN :ALSA_OUT
 # voir refresh
 optimiser startup
 empêcher les crash
-Utiliser les icônes MIDI
-raccourcir les noms comme pour A2J si possible
+# Utiliser les icônes MIDI
+# raccourcir les noms comme pour A2J si possible
 design du port
 couleurs ALSA tous themes
