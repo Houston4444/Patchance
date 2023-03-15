@@ -1,5 +1,6 @@
 
 from dataclasses import dataclass
+import time
 from typing import TYPE_CHECKING
 from threading import Thread
     
@@ -249,17 +250,23 @@ class AlsaManager:
                         client_info = self.seq.get_client_info(client_id)
                     except:
                         continue
-
+                    
+                    # Sometimes client name is not ready
+                    if client_info['name'] == f'Client-{client_id}':
+                        time.sleep(0.010)
+                        client_info = self.seq.get_client_info(client_id)
+                    
                     self._clients[client_id] = AlsaClient(
                         self, client_info['name'], client_id)
+
                 elif event.type == SEQ_EVENT_CLIENT_EXIT:
                     client_id = data['addr.client']
-                    client = self._clients[client_id]
+                    client = self._clients.get(client_id)
                     if client is not None:
                         for port in client.ports.values():
                             self.remove_port_from_patchbay(client, port)
 
-                    del self._clients[client_id]
+                        del self._clients[client_id]
                     
                 elif event.type == SEQ_EVENT_PORT_START:
                     client_id, port_id = data['addr.client'], data['addr.port']
