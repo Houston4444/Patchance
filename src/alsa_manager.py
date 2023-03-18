@@ -250,7 +250,7 @@ class AlsaManager:
                         client_info = self.seq.get_client_info(client_id)
                     except:
                         continue
-                    
+
                     n_tries = 0
                     client_outed = False
 
@@ -262,14 +262,14 @@ class AlsaManager:
                         except:
                             client_outed = True
                             break
-                        
+
                         n_tries += 1
                         if n_tries >= 5:
                             break
-                    
+
                     if client_outed:
                         continue
-                    
+
                     self._clients[client_id] = AlsaClient(
                         self, client_info['name'], client_id)
 
