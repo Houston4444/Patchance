@@ -78,13 +78,13 @@ class JackManager:
         self.jack_running = False
         self.jack_client = None
         self.patchbay_manager = patchbay_manager
-        
+
         self._stopped_sent = False
-        
+
         self._dsp_n = 0
         self._last_dsp_sent = 0
         self._max_dsp_since_last_send = 0
-        
+
         self._dsp_timer = QTimer()
         self._dsp_timer.setInterval(200)
         self._dsp_timer.timeout.connect(self._check_dsp)
