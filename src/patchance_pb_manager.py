@@ -75,6 +75,7 @@ class PatchancePatchbayManager(PatchbayManager):
         self._settings = settings
         
         self.jack_mng = None
+        self.alsa_mng = None
         self._memory_path = None
         
         if settings is not None:

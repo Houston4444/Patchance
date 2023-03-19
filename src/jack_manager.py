@@ -79,6 +79,8 @@ class JackManager:
         self.jack_client = None
         self.patchbay_manager = patchbay_manager
         
+        self._stopped_sent = False
+        
         self._dsp_n = 0
         self._last_dsp_sent = 0
         self._max_dsp_since_last_send = 0
@@ -233,6 +235,7 @@ class JackManager:
 
         if self.jack_client:
             self.jack_running = True
+            self._stopped_sent = False
             self.set_registrations()
             self.init_the_graph()
             self.samplerate = jacklib.get_sample_rate(self.jack_client)
@@ -242,7 +245,10 @@ class JackManager:
             self._transport_timer.start()
         else:
             self.jack_running = False
-            self.patchbay_manager.server_stopped()
+            if not self._stopped_sent:
+                self.patchbay_manager.server_stopped()
+                self._stopped_sent = True
+
         self._jack_checker_timer.start()
     
     def _check_dsp(self):
