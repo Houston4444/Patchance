@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING
 
 from PyQt5.QtCore import QTimer
 
-import local_jacklib as jacklib
-from local_jacklib.helpers import c_char_p_p_to_list
+import jacklib
+from jacklib import JackPortFlags, JackMetadata, JackOptions, JackPositionBits, JackPropertyChange
+from jacklib.helpers import c_char_p_p_to_list
 
 from patchbay.base_elements import TransportPosition
 if TYPE_CHECKING:
@@ -140,10 +141,10 @@ class JackManager:
                 client_names.append(client_name)
 
             # get port metadatas
-            for key in (jacklib.JACK_METADATA_CONNECTED,
-                        jacklib.JACK_METADATA_ORDER,
-                        jacklib.JACK_METADATA_PORT_GROUP,
-                        jacklib.JACK_METADATA_PRETTY_NAME):
+            for key in (JackMetadata.CONNECTED,
+                        JackMetadata.ORDER,
+                        JackMetadata.PORT_GROUP,
+                        JackMetadata.PRETTY_NAME):            
                 prop = jacklib.get_property(uuid, key)
                 if prop is None:
                     continue
@@ -151,7 +152,7 @@ class JackManager:
                 value = self.get_metadata_value_str(prop)
                 metadatas.append(Metadata(uuid, key, value))
 
-            if flags & jacklib.JackPortIsInput:
+            if flags & JackPortFlags.IS_INPUT:
                 jack_ports.append(JackPort(port_name, port_type, flags, uuid, []))
                 continue
             
@@ -183,9 +184,9 @@ class JackManager:
             
             # we only look for icon_name now, but in the future other client
             # metadatas could be enabled
-            for key in (jacklib.JACK_METADATA_ICON_NAME,):
+            for key in (JackMetadata.ICON_NAME,):
                 prop = jacklib.get_property(
-                    int(uuid), jacklib.JACK_METADATA_ICON_NAME)
+                    int(uuid), JackMetadata.ICON_NAME)
                 if prop is None:
                     continue
                 value = self.get_metadata_value_str(prop)
@@ -226,7 +227,7 @@ class JackManager:
         with suppress_stdout_stderr():
             self.jack_client = jacklib.client_open(
                 "Patchance",
-                jacklib.JackNoStartServer | jacklib.JackSessionID,
+                JackOptions.NO_START_SERVER | JackOptions.SESSION_ID,
                 None)
 
         self._waiting_jack_client_open = False
@@ -286,7 +287,7 @@ class JackManager:
         transport_position = TransportPosition(
             int(pos.frame),
             bool(state),
-            bool(pos.valid & jacklib.JackPositionBBT),
+            bool(pos.valid & JackPositionBits.POSITION_BBT),
             int(pos.bar),
             int(pos.beat),
             int(pos.tick),
@@ -405,7 +406,7 @@ class JackManager:
         
         value = ''
 
-        if name and type_ != jacklib.PropertyDeleted:
+        if name and type_ != JackPropertyChange.DELETED:
             prop = jacklib.get_property(uuid, name)
             if prop is None:
                 return 0
