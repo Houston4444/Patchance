@@ -139,6 +139,8 @@ install:
 	cp -r src $(DEST_PATCHANCE)/
 	rm $(DEST_PATCHANCE)/src/patchbay
 	cp -r $(PATCHBAY_DIR)/patchbay $(DEST_PATCHANCE)/src/
+	rm $(DEST_PATCHANCE)/src/jacklib
+	cp -r pyjacklib/jacklib $(DEST_PATCHANCE)/src/
 	
 # 	# compile python files
 	$(PYTHON) -m compileall $(DEST_PATCHANCE)/src/
