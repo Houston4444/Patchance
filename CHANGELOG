@@ -1,4 +1,4 @@
-1.1.0 / 2023-07-30
+1.1.0 / 2023-07-29
     Features:
         ALSA MIDI support : Add possibility to display and connect ALSA MIDI ports
 
@@ -7,7 +7,7 @@
     make Mixbus groups behave as Ardour ones
     update default zoom on zoom slider at startup
      fix ugly icons when default zoom is not 100%
-     
+
 
 
 1.0.0 / 2023-01-21
