@@ -1,0 +1,29 @@
+1.1.0 / 2023-07-30
+    Features:
+        ALSA MIDI support : Add possibility to display and connect ALSA MIDI ports
+
+    Bug fixes:
+        prevent to send server stopped every twice a second to the patchbay (when JACK is stopped)
+    make Mixbus groups behave as Ardour ones
+    update default zoom on zoom slider at startup
+     fix ugly icons when default zoom is not 100%
+     
+
+
+1.0.0 / 2023-01-21
+    Bug fixes:
+        add Patchichi export function in options dialog (this is the only one new feature)
+        Port is now CV if it is mentioned only in the port metadatas
+        fix CV ports not really readable in "dark boards" theme
+        allow custom metadata icons for any box type
+        fix theme not renamed after duplicate with new name
+        fix inconsistent portgroup name if portgroup name endswith with AUX with at least digits at end of the port name.
+
+0.2.0 / 2022-09-26
+    Bug fixes:
+        fix a python3.10 crash with wrong int/float conversion
+        use default (not from patchbay theme) hardware/monitor icons in context menu
+        remove checkbox style sheet in connect context menu, style was unreadable with fusion or kvantum qt themes
+
+0.1.0 / 2022-09-02
+    First pre-release.
