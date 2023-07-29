@@ -50,7 +50,7 @@
        <item>
         <widget class="QLabel" name="labelAllText">
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Patchance is a python Qt application to manage JACK connections.&lt;/p&gt;&lt;p&gt;If you want the same patchbay with session management, you can use RaySession instead.&lt;/p&gt;&lt;p&gt;It uses the  HoustonPatchbay submodule for the canvas.&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;right&quot;&gt;Copyright (C) 2022-2022 houston4444&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Patchance is a python Qt application to manage JACK connections.&lt;/p&gt;&lt;p&gt;If you want the same patchbay with session management, you can use RaySession instead.&lt;/p&gt;&lt;p&gt;It uses the  HoustonPatchbay submodule for the canvas.&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;right&quot;&gt;Copyright (C) 2022-2023 houston4444&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>

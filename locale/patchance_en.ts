@@ -15,7 +15,7 @@
     </message>
     <message>
         <location filename="../resources/ui/about_patchance.ui" line="53"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Patchance is a python Qt application to manage JACK connections.&lt;/p&gt;&lt;p&gt;If you want the same patchbay with session management, you can use RaySession instead.&lt;/p&gt;&lt;p&gt;It uses the  HoustonPatchbay submodule for the canvas.&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;right&quot;&gt;Copyright (C) 2022-2022 houston4444&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Patchance is a python Qt application to manage JACK connections.&lt;/p&gt;&lt;p&gt;If you want the same patchbay with session management, you can use RaySession instead.&lt;/p&gt;&lt;p&gt;It uses the  HoustonPatchbay submodule for the canvas.&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;right&quot;&gt;Copyright (C) 2022-2023 houston4444&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

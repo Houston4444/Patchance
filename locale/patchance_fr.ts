@@ -15,8 +15,8 @@
     </message>
     <message>
         <location filename="../resources/ui/about_patchance.ui" line="53"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Patchance is a python Qt application to manage JACK connections.&lt;/p&gt;&lt;p&gt;If you want the same patchbay with session management, you can use RaySession instead.&lt;/p&gt;&lt;p&gt;It uses the  HoustonPatchbay submodule for the canvas.&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;right&quot;&gt;Copyright (C) 2022-2022 houston4444&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Patchance est une application écrite en python Qt pour gérer les connexions de JACK.&lt;/p&gt;&lt;p&gt;Si vous voulez la même baie de brassage avec un gestionnaire de sessions, utilisez plutôt RaySession.&lt;/p&gt;&lt;p&gt;Elle utilise le sous-module HoustonPatchbay pour la baie de brassage.&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;right&quot;&gt;Copyright (C) 2022-2022 houston4444&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Patchance is a python Qt application to manage JACK connections.&lt;/p&gt;&lt;p&gt;If you want the same patchbay with session management, you can use RaySession instead.&lt;/p&gt;&lt;p&gt;It uses the  HoustonPatchbay submodule for the canvas.&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;right&quot;&gt;Copyright (C) 2022-2023 houston4444&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Patchance est une application écrite en python Qt pour gérer les connexions de JACK.&lt;/p&gt;&lt;p&gt;Si vous voulez la même baie de brassage avec un gestionnaire de sessions, utilisez plutôt RaySession.&lt;/p&gt;&lt;p&gt;Elle utilise le sous-module HoustonPatchbay pour la baie de brassage.&lt;br/&gt;&lt;/p&gt;&lt;p align=&quot;right&quot;&gt;Copyright (C) 2022-2023 houston4444&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
 </context>
 <context>
@@ -59,7 +59,7 @@
     <message>
         <location filename="../resources/ui/main_win.ui" line="132"/>
         <source>About Patchance</source>
-        <translation type="unfinished">À propos de Patchance</translation>
+        <translation>À propos de Patchance</translation>
     </message>
     <message>
         <location filename="../resources/ui/main_win.ui" line="141"/>

@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -u
 
 APP_TITLE = 'Patchance'
-VERSION = (1, 0, 0)
+VERSION = (1, 1, 0)
 
 import sys
 
