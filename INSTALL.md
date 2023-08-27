@@ -7,12 +7,12 @@ To install Patchance, simply run as usual: <br/>
 `$ make` <br/>
 `$ [sudo] make install`
 
-depending of the distribution you'll need to use LRELEASE variable to install.
+Depending on the distribution (Fedora and others) you'll need to use the LRELEASE variable to build.
 If you don't have 'lrelease' executable but 'lrelease-qt5' use:
 `$ make LRELEASE=lrelease-qt5` <br/>
 `$ [sudo] make install`
 
-You can run Patchance without install, by using instead: <br/>
+You can run Patchance without installing, by using instead: <br/>
 `$ make` <br/>
 `$ ./src/patchance.py`
 
@@ -34,6 +34,9 @@ The required build dependencies are: <i>(devel packages of these)</i>
 On Debian and Ubuntu, use these commands to install all build dependencies: <br/>
 `$ sudo apt-get install python3-pyqt5 pyqt5-dev-tools qtchooser qttools5-dev-tools`
 
+On Fedora: <br/>
+` $ sudo dnf install python3-qt5-devel qt-devel qtchooser`
+
 ===== RUNTIME DEPENDENCIES =====
 ---------------------------------
 If you want to provide ALSA MIDI ports, you must have the python3-pyalsa lib with version >= 1.2.4.
@@ -41,3 +44,6 @@ If you want to provide ALSA MIDI ports, you must have the python3-pyalsa lib wit
 On Debian and Ubuntu, use these commands to install this optional dependency: <br/>
 `$ sudo apt-get install python3-pyalsa`
 But note that it may be not enough if the version provided by your system is too old.
+
+On Fedora: <br/>
+` $ sudo dnf install python3-alsa`
