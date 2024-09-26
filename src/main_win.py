@@ -1,16 +1,17 @@
 
-from dis import dis
-from re import L
+import inspect
 from typing import TYPE_CHECKING
-from PyQt5.QtWidgets import QMainWindow, QShortcut, QMenu, QApplication, QToolButton
+
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QResizeEvent
+from PyQt5.QtWidgets import (
+    QMainWindow, QShortcut, QMenu, QApplication, QToolButton)
 
 from about_dialog import AboutDialog
 from patchbay.tools_widgets import PatchbayToolsWidget
 from patchbay.base_elements import ToolDisplayed
 
 from ui.main_win import Ui_MainWindow
-
 
 if TYPE_CHECKING:
     from patchance import Main
@@ -30,17 +31,21 @@ class MainWindow(QMainWindow):
         self.main_menu.addAction(self.ui.actionShowMenuBar)
         self.main_menu.addAction(self.ui.actionQuit)
         
-        self.menu_button = self.ui.toolBar.widgetForAction(self.ui.actionMainMenu)
-        if TYPE_CHECKING:
-            assert isinstance(self.menu_button, QToolButton)
+        self.menu_button: QToolButton = self.ui.toolBar.widgetForAction(
+            self.ui.actionMainMenu)
         self.menu_button.setPopupMode(QToolButton.InstantPopup)
         self.menu_button.setMenu(self.main_menu)
         
         self.ui.filterFrame.setVisible(False)
         self.ui.actionShowMenuBar.toggled.connect(self._menubar_shown_toggled)
         self.ui.actionQuit.triggered.connect(QApplication.quit)
-        self.ui.actionAboutPatchance.triggered.connect(self._show_about_dialog)
+        self.ui.actionAboutPatchance.triggered.connect(
+            self._show_about_dialog)
         self.ui.actionAboutQt.triggered.connect(QApplication.aboutQt)
+
+        # prevent toolbar hideability
+        self.ui.toolBar.toggleViewAction().setEnabled(False)
+        self.ui.toolBar.toggleViewAction().setVisible(False)
 
         filter_bar_shortcut = QShortcut('Ctrl+F', self)
         filter_bar_shortcut.setContext(Qt.ApplicationShortcut)
@@ -57,15 +62,16 @@ class MainWindow(QMainWindow):
         self._normal_screen_maximized = False
         self._normal_screen_had_menu = False
         
-        patchbay_tools_act = self.ui.toolBar.addWidget(PatchbayToolsWidget())
-        self.patchbay_tools = self.ui.toolBar.widgetForAction(patchbay_tools_act)
-        
+        self.patchbay_tools = PatchbayToolsWidget()
+        self.patchbay_tools.set_tool_bars(
+            self.ui.toolBar, self.ui.toolBarTransport,
+            self.ui.toolBarJack, self.ui.toolBarCanvas)
+                
         self.ui.graphicsView.setFocus()
         
     def finish_init(self, main: 'Main'):
         self.patchbay_manager = main.patchbay_manager
         self.settings = main.settings
-        self.ui.toolBar.set_patchbay_manager(main.patchbay_manager)
         self.ui.filterFrame.set_patchbay_manager(main.patchbay_manager)
         main.patchbay_manager.sg.filters_bar_toggle_wanted.connect(
             self.toggle_filter_frame_visibility)
@@ -88,7 +94,8 @@ class MainWindow(QMainWindow):
             self.last_separator, main.patchbay_manager.canvas_menu)
         
         default_disp_widg = (
-            ToolDisplayed.PORT_TYPES_VIEW
+            ToolDisplayed.HIDDENS_BOX
+            | ToolDisplayed.PORT_TYPES_VIEW
             | ToolDisplayed.ZOOM_SLIDER
             | ToolDisplayed.TRANSPORT_CLOCK
             | ToolDisplayed.TRANSPORT_PLAY_STOP
@@ -97,9 +104,10 @@ class MainWindow(QMainWindow):
             | ToolDisplayed.XRUNS
             | ToolDisplayed.DSP_LOAD)
         
-        default_disp_str = self.settings.value('tool_bar/elements', '', type=str)
+        default_disp_str = self.settings.value(
+            'tool_bar/elements', '', type=str)
 
-        self.ui.toolBar.set_default_displayed_widgets(
+        self.patchbay_tools.change_tools_displayed(
             default_disp_widg.filtered_by_string(default_disp_str))
 
     def _menubar_shown_toggled(self, state: int):
@@ -141,7 +149,14 @@ class MainWindow(QMainWindow):
         self.settings.setValue('MainWindow/geometry', self.saveGeometry())
         self.settings.setValue(
             'tool_bar/elements',
-            self.ui.toolBar.get_displayed_widgets().to_save_string())
+            self.patchbay_tools._tools_displayed.to_save_string())
     
         super().closeEvent(event)
+        
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        # if self.patchbay_tools.resize_prevent:
+        #     return
+        
+        super().resizeEvent(event)
+        self.patchbay_tools.main_win_resize(self)
     

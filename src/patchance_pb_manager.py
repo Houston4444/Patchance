@@ -2,18 +2,21 @@
 import json
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QApplication
 
-from patchbay.base_elements import GroupPos, PortgroupMem
+from patchbay.base_elements import (
+    GroupPos,
+    PortgroupMem,
+    PortTypesViewFlag,
+    PortType)
 from patchbay import (
     CanvasMenu,
     Callbacker,
     CanvasOptionsDialog,
     PatchbayManager)
-from patchbay.patchcanvas.init_values import PortType
 
 from tools import get_code_root
 import xdg
@@ -77,36 +80,169 @@ class PatchancePatchbayManager(PatchbayManager):
         self.jack_mng = None
         self.alsa_mng = None
         self._memory_path = None
+        self._load_memory_file()
+
+    def _load_memory_file(self):
+        if self._settings is None:
+            return
         
-        if settings is not None:
-            self._memory_path = Path(settings.fileName()).parent.joinpath(MEMORY_FILE)
+        self._memory_path = \
+            Path(self._settings.fileName()).parent.joinpath(MEMORY_FILE)
 
-            try:
-                with open(self._memory_path, 'r') as f:                
-                    json_dict = json.load(f)
-                    assert isinstance(json_dict, dict)
-            except FileNotFoundError:
-                _logger.warning(f"File {self._memory_path} has not been found,"
-                                "It is probably the first startup.")
-                return
-            except:
-                _logger.warning(f"File {self._memory_path} is incorrectly written"
-                                "it will be ignored.")
-                return
+        no_file_to_load = False
+
+        try:
+            with open(self._memory_path, 'r') as f:                
+                json_dict = json.load(f)
+                assert isinstance(json_dict, dict)
+
+        except FileNotFoundError:
+            _logger.warning(
+                f"File {self._memory_path} has not been found, "
+                "It is probably the first startup.")
+            no_file_to_load = True
+
+        except:
+            _logger.warning(
+                f"File {self._memory_path} is incorrectly written, "
+                "it will be ignored.")
+            no_file_to_load = True
+        
+        self.view_number = 1
+
+        if no_file_to_load:
+            self.views[self.view_number] = {}
+            return
+
+        group_positions: list[dict] = json_dict.get('group_positions')
+        views: dict = json_dict.get('views')
+        
+        if isinstance(views, list):
+            indexes = set[int]()
+            missing_indexes = set[int]()
             
-            if 'group_positions' in json_dict.keys():
-                gposs = json_dict['group_positions']
+            # first check for missing or duplicate indexes
+            for v_dict in views:
+                if not isinstance(v_dict, dict):
+                    _logger.warning('View is not a dict')
+                    continue
+                
+                index = v_dict.get('index')
+                if not isinstance(index, int) or index in indexes:
+                    missing_indexes.add(views.index(v_dict))
+                else:
+                    indexes.add(index)
 
-                for gpos in gposs:
-                    if isinstance(gpos, dict):
-                        self.group_positions.append(GroupPos.from_serialized_dict(gpos))
+            if missing_indexes:
+                missing_list = sorted(missing_indexes)
+                for i in missing_list:
+                    index = i + 1
+                    while index in indexes:
+                        index += 1
+                    self.views[i]['index'] = index
+                    indexes.add(index)
             
-            if 'portgroups' in json_dict.keys():
-                pg_mems = json_dict['portgroups']
+            # now we can assume all views have an index
+            # let's parse the list of dicts
+            for v_dict in views:
+                if not isinstance(v_dict, dict):
+                    continue
+                
+                view_number = v_dict['index']
+                self.views[view_number] = {}
+                name = v_dict.get('name')
+                port_types_str = v_dict.get('default_port_types')
+                is_white_list = v_dict.get('is_white_list')
+                
+                if isinstance(name, str):
+                    self.write_view_data(view_number, name=name)
 
-                for pg_mem_dict in pg_mems:
-                    self.portgroups_memory.append(
-                        PortgroupMem.from_serialized_dict(pg_mem_dict))
+                if isinstance(port_types_str, str):
+                    default_port_types = PortTypesViewFlag.from_config_str(
+                        port_types_str)
+                    self.write_view_data(
+                        view_number, port_types=default_port_types)
+
+                if is_white_list is not None:
+                   self.write_view_data(
+                       view_number, white_list_view=bool(is_white_list)) 
+                
+                for ptv_str, ptv_dict in v_dict.items():
+                    if not isinstance(ptv_dict, dict):
+                        continue
+                    
+                    if not (isinstance(ptv_str, str)):
+                        continue
+                    
+                    ptv = PortTypesViewFlag.from_config_str(ptv_str)
+                    if not ptv:
+                        continue
+                    
+                    self.views[view_number][ptv] = {}
+                    
+                    for group_name, gpos_dict in ptv_dict.items():
+                        if not isinstance(gpos_dict, dict):
+                            continue
+                        
+                        if not isinstance(group_name, str):
+                            continue
+                        
+                        self.views[view_number][ptv][group_name] = \
+                            GroupPos.from_new_dict(ptv, group_name, gpos_dict)
+
+            self.sort_views_by_index()
+
+            for view_key in self.views.keys():
+                # select the first view
+                self.view_number = view_key
+                break
+            else:
+                # no views in the file, write an empty view
+                self.views[self.view_number] = {}
+
+        elif isinstance(group_positions, list):
+            self.views[self.view_number] = {}
+
+            higher_ptv_int = (PortTypesViewFlag.AUDIO
+                              | PortTypesViewFlag.MIDI
+                              | PortTypesViewFlag.CV).value
+
+            for gpos_dict in group_positions:
+                higher_ptv_int = max(
+                    higher_ptv_int, gpos_dict['port_types_view'])
+
+            for gpos_dict in group_positions:
+                if gpos_dict['port_types_view'] == higher_ptv_int:
+                    gpos_dict['port_types_view'] = PortTypesViewFlag.ALL.value
+
+                gpos = GroupPos.from_serialized_dict(gpos_dict)
+                ptv_dict = self.views[self.view_number].get(gpos.port_types_view)
+                if ptv_dict is None:
+                    ptv_dict = {}
+                    self.views[self.view_number][gpos.port_types_view] = ptv_dict
+                
+                ptv_dict[gpos.group_name] = gpos
+
+        else:
+            self.views[self.view_number] = {}
+
+        self.sg.views_changed.emit()
+
+        # if 'group_positions' in json_dict.keys():
+        #     self.views[self.view_number] = {}
+        #     gposs = json_dict['group_positions']
+
+        #     for gpos in gposs:
+        #         if isinstance(gpos, dict):
+        #             self.group_positions.append(
+        #                 GroupPos.from_serialized_dict(gpos))
+        
+        if 'portgroups' in json_dict.keys():
+            pg_mems = json_dict['portgroups']
+
+            for pg_mem_dict in pg_mems:
+                self.portgroups_memory.append(
+                    PortgroupMem.from_serialized_dict(pg_mem_dict))
     
     def _setup_canvas(self):
         SUBMODULE = 'HoustonPatchbay'
@@ -188,19 +324,69 @@ class PatchancePatchbayManager(PatchbayManager):
 
         self.set_options_dialog(CanvasOptionsDialog(self.main_win, self, self._settings))
 
-    def save_positions(self):        
-        gposs_as_dicts = [gpos.as_serializable_dict()
-                          for gpos in self.group_positions]
+    def save_positions(self):
         pg_mems_as_dict = [pg_mem.as_serializable_dict()
                            for pg_mem in self.portgroups_memory]
         
-        full_dict = {'group_positions': gposs_as_dicts,
-                     'portgroups': pg_mems_as_dict}
+        full_dict = {'portgroups': pg_mems_as_dict}
+        
+        self.sort_views_by_index()
+        views = []
+
+        for view_number, ptv_dict in self.views.items():
+            view_item = {}
+            view_item['index'] = view_number
+
+            view_data = self.views_datas.get(view_number)
+            if view_data is not None:
+                if view_data.name:
+                    view_item['name'] = view_data.name
+                view_item['default_port_types'] = \
+                    view_data.default_port_types_view.to_config_str()
+                if view_data.is_white_list:
+                    view_item['is_white_list'] = True
+                        
+            for ptv, pt_dict in ptv_dict.items():
+                ptv_str = ptv.to_config_str()
+                if not ptv_str:
+                    continue
+                
+                view_item[ptv_str] = {}
+
+                for group_name, gpos in pt_dict.items():
+                    if gpos.has_sure_existence:
+                        view_item[ptv_str][group_name] = gpos.as_new_dict()
+            views.append(view_item)
+
+        full_dict['views'] = views
+        
+        json_str = json.dumps(full_dict, indent=2)
+
+        final_str = ''
+        comp_line = ''
+
+        for line in json_str.splitlines():
+            if line.strip() == '"pos": [':
+                comp_line = line
+                continue
+            
+            if comp_line:
+                comp_line += line.strip()
+                if comp_line.endswith(','):
+                    comp_line += ' '
+
+                if line.strip().startswith(']'):
+                    final_str += comp_line
+                    final_str += '\n'
+                    comp_line = ''
+            else:
+                final_str += line
+                final_str += '\n'
         
         if self._memory_path is not None:
             try:
                 with open(self._memory_path, 'w') as f:
-                    json.dump(full_dict, f, indent=4)
+                    f.write(final_str)
             except Exception as e:
                 _logger.warning(str(e))
 
