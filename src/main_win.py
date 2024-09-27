@@ -1,13 +1,13 @@
 
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtWidgets import (
     QMainWindow, QShortcut, QMenu, QApplication, QToolButton)
 
 from about_dialog import AboutDialog
-from patchbay.tools_widgets import PatchbayToolsWidget
+from patchbay.tools_widgets import PatchbayToolsWidget, TextWithIcons
 from patchbay.base_elements import ToolDisplayed
 
 from ui.main_win import Ui_MainWindow
@@ -62,6 +62,7 @@ class MainWindow(QMainWindow):
         self._normal_screen_had_menu = False
         
         self.patchbay_tools = PatchbayToolsWidget()
+        self.patchbay_tools._text_with_icons = TextWithIcons.NO
         self.patchbay_tools.set_tool_bars(
             self.ui.toolBar, self.ui.toolBarTransport,
             self.ui.toolBarJack, self.ui.toolBarCanvas)
