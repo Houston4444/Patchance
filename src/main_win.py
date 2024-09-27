@@ -1,8 +1,7 @@
 
-import inspect
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtWidgets import (
     QMainWindow, QShortcut, QMenu, QApplication, QToolButton)
@@ -66,7 +65,7 @@ class MainWindow(QMainWindow):
         self.patchbay_tools.set_tool_bars(
             self.ui.toolBar, self.ui.toolBarTransport,
             self.ui.toolBarJack, self.ui.toolBarCanvas)
-                
+
         self.ui.graphicsView.setFocus()
         
     def finish_init(self, main: 'Main'):
@@ -126,7 +125,11 @@ class MainWindow(QMainWindow):
     def toggle_patchbay_full_screen(self):
         if self.isFullScreen():
             self.ui.verticalLayout.setContentsMargins(2, 2, 2, 2)
-            self.ui.toolBar.setVisible(True)
+
+            for toolbar in (self.ui.toolBar, self.ui.toolBarTransport,
+                            self.ui.toolBarJack, self.ui.toolBarCanvas):
+                toolbar.setVisible(True)
+
             self.showNormal()
             if self._normal_screen_maximized:
                 self.showMaximized()
@@ -137,7 +140,11 @@ class MainWindow(QMainWindow):
             self._normal_screen_maximized = self.isMaximized()
             self._normal_screen_had_menu = self.ui.menubar.isVisible()
             self.ui.menubar.setVisible(False)
-            self.ui.toolBar.setVisible(False)
+
+            for toolbar in (self.ui.toolBar, self.ui.toolBarTransport,
+                            self.ui.toolBarJack, self.ui.toolBarCanvas):
+                toolbar.setVisible(False)
+            
             self.ui.verticalLayout.setContentsMargins(0, 0, 0, 0)
             self.showFullScreen()
 
@@ -154,9 +161,6 @@ class MainWindow(QMainWindow):
         super().closeEvent(event)
         
     def resizeEvent(self, event: QResizeEvent) -> None:
-        # if self.patchbay_tools.resize_prevent:
-        #     return
-        
         super().resizeEvent(event)
         self.patchbay_tools.main_win_resize(self)
     
