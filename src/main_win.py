@@ -63,6 +63,7 @@ class MainWindow(QMainWindow):
         
         self.patchbay_tools = PatchbayToolsWidget()
         self.patchbay_tools._text_with_icons = TextWithIcons.NO
+        self.patchbay_tools.no_text_with_icons_act = True
         self.patchbay_tools.set_tool_bars(
             self.ui.toolBar, self.ui.toolBarTransport,
             self.ui.toolBarJack, self.ui.toolBarCanvas)
