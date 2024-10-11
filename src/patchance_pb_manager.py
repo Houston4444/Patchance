@@ -17,6 +17,8 @@ from patchbay import (
     Callbacker,
     CanvasOptionsDialog,
     PatchbayManager)
+from patchbay.patchcanvas.base_enums import (
+    from_json_to_str, portgroups_mem_from_json, portgroups_memory_to_json)
 
 from tools import get_code_root
 import xdg
@@ -227,22 +229,10 @@ class PatchancePatchbayManager(PatchbayManager):
             self.views[self.view_number] = {}
 
         self.sg.views_changed.emit()
-
-        # if 'group_positions' in json_dict.keys():
-        #     self.views[self.view_number] = {}
-        #     gposs = json_dict['group_positions']
-
-        #     for gpos in gposs:
-        #         if isinstance(gpos, dict):
-        #             self.group_positions.append(
-        #                 GroupPos.from_serialized_dict(gpos))
         
         if 'portgroups' in json_dict.keys():
-            pg_mems = json_dict['portgroups']
-
-            for pg_mem_dict in pg_mems:
-                self.portgroups_memory.append(
-                    PortgroupMem.from_serialized_dict(pg_mem_dict))
+            self.portgroups_memory = portgroups_mem_from_json(
+                json_dict['portgroups'])
     
     def _setup_canvas(self):
         SUBMODULE = 'HoustonPatchbay'
@@ -325,10 +315,8 @@ class PatchancePatchbayManager(PatchbayManager):
         self.set_options_dialog(CanvasOptionsDialog(self.main_win, self, self._settings))
 
     def save_positions(self):
-        pg_mems_as_dict = [pg_mem.as_serializable_dict()
-                           for pg_mem in self.portgroups_memory]
-        
-        full_dict = {'portgroups': pg_mems_as_dict}
+        full_dict = {'portgroups': portgroups_memory_to_json(
+            self.portgroups_memory)}
         
         self.sort_views_by_index()
         views = []
@@ -360,33 +348,12 @@ class PatchancePatchbayManager(PatchbayManager):
 
         full_dict['views'] = views
         
-        json_str = json.dumps(full_dict, indent=2)
+        json_str = from_json_to_str(full_dict)
 
-        final_str = ''
-        comp_line = ''
-
-        for line in json_str.splitlines():
-            if line.strip() == '"pos": [':
-                comp_line = line
-                continue
-            
-            if comp_line:
-                comp_line += line.strip()
-                if comp_line.endswith(','):
-                    comp_line += ' '
-
-                if line.strip().startswith(']'):
-                    final_str += comp_line
-                    final_str += '\n'
-                    comp_line = ''
-            else:
-                final_str += line
-                final_str += '\n'
-        
         if self._memory_path is not None:
             try:
                 with open(self._memory_path, 'w') as f:
-                    f.write(final_str)
+                    f.write(json_str)
             except Exception as e:
                 _logger.warning(str(e))
 
