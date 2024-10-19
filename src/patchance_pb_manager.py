@@ -8,8 +8,6 @@ from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QApplication
 
 from patchbay.base_elements import (
-    GroupPos,
-    PortgroupMem,
     PortTypesViewFlag,
     PortType)
 from patchbay import (
