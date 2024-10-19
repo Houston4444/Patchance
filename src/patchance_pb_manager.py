@@ -113,98 +113,14 @@ class PatchancePatchbayManager(PatchbayManager):
         self.view_number = 1
 
         if no_file_to_load:
-            self.views[self.view_number] = {}
+            self.views.add_view(view_num=self.view_number)
             return
-
-        group_positions: list[dict] = json_dict.get('group_positions')
-        views: dict = json_dict.get('views')
         
-        if isinstance(views, list):
-            indexes = set[int]()
-            missing_indexes = set[int]()
-            
-            # first check for missing or duplicate indexes
-            for v_dict in views:
-                if not isinstance(v_dict, dict):
-                    _logger.warning('View is not a dict')
-                    continue
-                
-                index = v_dict.get('index')
-                if not isinstance(index, int) or index in indexes:
-                    missing_indexes.add(views.index(v_dict))
-                else:
-                    indexes.add(index)
-
-            if missing_indexes:
-                missing_list = sorted(missing_indexes)
-                for i in missing_list:
-                    index = i + 1
-                    while index in indexes:
-                        index += 1
-                    self.views[i]['index'] = index
-                    indexes.add(index)
-            
-            # now we can assume all views have an index
-            # let's parse the list of dicts
-            for v_dict in views:
-                if not isinstance(v_dict, dict):
-                    continue
-                
-                view_number = v_dict['index']
-                self.views[view_number] = {}
-                name = v_dict.get('name')
-                port_types_str = v_dict.get('default_port_types')
-                is_white_list = v_dict.get('is_white_list')
-                
-                if isinstance(name, str):
-                    self.write_view_data(view_number, name=name)
-
-                if isinstance(port_types_str, str):
-                    default_port_types = PortTypesViewFlag.from_config_str(
-                        port_types_str)
-                    self.write_view_data(
-                        view_number, port_types=default_port_types)
-
-                if is_white_list is not None:
-                   self.write_view_data(
-                       view_number, white_list_view=bool(is_white_list)) 
-                
-                for ptv_str, ptv_dict in v_dict.items():
-                    if not isinstance(ptv_dict, dict):
-                        continue
-                    
-                    if not (isinstance(ptv_str, str)):
-                        continue
-                    
-                    ptv = PortTypesViewFlag.from_config_str(ptv_str)
-                    if not ptv:
-                        continue
-                    
-                    self.views[view_number][ptv] = {}
-                    
-                    for group_name, gpos_dict in ptv_dict.items():
-                        if not isinstance(gpos_dict, dict):
-                            continue
-                        
-                        if not isinstance(group_name, str):
-                            continue
-                        
-                        self.views[view_number][ptv][group_name] = \
-                            GroupPos.from_new_dict(ptv, group_name, gpos_dict)
-
-            self.sort_views_by_index()
-
-            for view_key in self.views.keys():
-                # select the first view
-                self.view_number = view_key
-                break
-            else:
-                # no views in the file, write an empty view
-                self.views[self.view_number] = {}
-
-        elif isinstance(group_positions, list):
-            self.views[self.view_number] = {}
-
+        if json_dict.get('views') is not None:
+            self.views.eat_json_list(json_dict.get('views'))
+        
+        elif json_dict.get('group_positions') is not None:
+            group_positions: list[dict] = json_dict.get('group_positions')
             higher_ptv_int = (PortTypesViewFlag.AUDIO
                               | PortTypesViewFlag.MIDI
                               | PortTypesViewFlag.CV).value
@@ -216,17 +132,16 @@ class PatchancePatchbayManager(PatchbayManager):
             for gpos_dict in group_positions:
                 if gpos_dict['port_types_view'] == higher_ptv_int:
                     gpos_dict['port_types_view'] = PortTypesViewFlag.ALL.value
-
-                gpos = GroupPos.from_serialized_dict(gpos_dict)
-                ptv_dict = self.views[self.view_number].get(gpos.port_types_view)
-                if ptv_dict is None:
-                    ptv_dict = {}
-                    self.views[self.view_number][gpos.port_types_view] = ptv_dict
                 
-                ptv_dict[gpos.group_name] = gpos
-
+                self.views.add_old_json_gpos(gpos_dict)
+        
+        for view_key in self.views.keys():
+            # select the first view
+            self.view_number = view_key
+            break
         else:
-            self.views[self.view_number] = {}
+            # no views in the file, write an empty view
+            self.views.add_view(view_num=self.view_number)
 
         self.sg.views_changed.emit()
         
@@ -312,43 +227,13 @@ class PatchancePatchbayManager(PatchbayManager):
         else:
             self.server_stopped()
 
-        self.set_options_dialog(CanvasOptionsDialog(self.main_win, self, self._settings))
+        self.set_options_dialog(
+            CanvasOptionsDialog(self.main_win, self, self._settings))
 
     def save_positions(self):
-        full_dict = {'portgroups': portgroups_memory_to_json(
-            self.portgroups_memory)}
-        
-        self.sort_views_by_index()
-        views = []
-
-        for view_number, ptv_dict in self.views.items():
-            view_item = {}
-            view_item['index'] = view_number
-
-            view_data = self.views_datas.get(view_number)
-            if view_data is not None:
-                if view_data.name:
-                    view_item['name'] = view_data.name
-                view_item['default_port_types'] = \
-                    view_data.default_port_types_view.to_config_str()
-                if view_data.is_white_list:
-                    view_item['is_white_list'] = True
-                        
-            for ptv, pt_dict in ptv_dict.items():
-                ptv_str = ptv.to_config_str()
-                if not ptv_str:
-                    continue
-                
-                view_item[ptv_str] = {}
-
-                for group_name, gpos in pt_dict.items():
-                    if gpos.has_sure_existence:
-                        view_item[ptv_str][group_name] = gpos.as_new_dict()
-            views.append(view_item)
-
-        full_dict['views'] = views
-        
-        json_str = from_json_to_str(full_dict)
+        json_str = from_json_to_str(
+            {'views': self.views.to_json_list(),
+             'portgroups': portgroups_memory_to_json(self.portgroups_memory)})
 
         if self._memory_path is not None:
             try:
