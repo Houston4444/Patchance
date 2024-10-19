@@ -113,11 +113,10 @@ class PatchancePatchbayManager(PatchbayManager):
         self.view_number = 1
 
         if no_file_to_load:
-            self.views.add_view(view_num=self.view_number)
             return
         
         if json_dict.get('views') is not None:
-            self.views.eat_json_list(json_dict.get('views'))
+            self.views.eat_json_list(json_dict.get('views'), clear=True)
         
         elif json_dict.get('group_positions') is not None:
             group_positions: list[dict] = json_dict.get('group_positions')
@@ -135,13 +134,7 @@ class PatchancePatchbayManager(PatchbayManager):
                 
                 self.views.add_old_json_gpos(gpos_dict)
         
-        for view_key in self.views.keys():
-            # select the first view
-            self.view_number = view_key
-            break
-        else:
-            # no views in the file, write an empty view
-            self.views.add_view(view_num=self.view_number)
+        self.view_number = self.views.first_view_num()
 
         self.sg.views_changed.emit()
         
