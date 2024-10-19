@@ -15,8 +15,7 @@ from patchbay import (
     Callbacker,
     CanvasOptionsDialog,
     PatchbayManager)
-from patchbay.patchcanvas.base_enums import (
-    from_json_to_str, portgroups_mem_from_json, portgroups_memory_to_json)
+from patchbay.patchcanvas.base_enums import from_json_to_str
 
 from tools import get_code_root
 import xdg
@@ -133,12 +132,10 @@ class PatchancePatchbayManager(PatchbayManager):
                 self.views.add_old_json_gpos(gpos_dict)
         
         self.view_number = self.views.first_view_num()
+        self.portgroups_memory.eat_json(json_dict.get('portgroups'))
 
         self.sg.views_changed.emit()
         
-        if 'portgroups' in json_dict.keys():
-            self.portgroups_memory = portgroups_mem_from_json(
-                json_dict['portgroups'])
     
     def _setup_canvas(self):
         SUBMODULE = 'HoustonPatchbay'
@@ -224,7 +221,7 @@ class PatchancePatchbayManager(PatchbayManager):
     def save_positions(self):
         json_str = from_json_to_str(
             {'views': self.views.to_json_list(),
-             'portgroups': portgroups_memory_to_json(self.portgroups_memory)})
+             'portgroups': self.portgroups_memory.to_json()})
 
         if self._memory_path is not None:
             try:
