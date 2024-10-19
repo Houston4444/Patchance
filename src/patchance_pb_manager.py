@@ -2,20 +2,18 @@
 import json
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Union
 
 from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QApplication
 
-from patchbay.base_elements import (
-    PortTypesViewFlag,
-    PortType)
 from patchbay import (
     CanvasMenu,
     Callbacker,
     CanvasOptionsDialog,
     PatchbayManager)
-from patchbay.patchcanvas.base_enums import from_json_to_str
+from patchbay.patchcanvas.patshared import (
+    PortType, PortTypesViewFlag, from_json_to_str)
 
 from tools import get_code_root
 import xdg
