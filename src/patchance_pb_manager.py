@@ -45,11 +45,13 @@ class PatchanceCallbacker(Callbacker):
             if self.mng.alsa_mng is None:
                 return
         
-            self.mng.alsa_mng.connect_ports(port_out.full_name, port_in.full_name)
+            self.mng.alsa_mng.connect_ports(
+                port_out.full_name, port_in.full_name)
         if self.mng.jack_mng is None:
             return
         
-        self.mng.jack_mng.connect_ports(port_out.full_name, port_in.full_name)
+        self.mng.jack_mng.connect_ports(
+            port_out.full_name, port_in.full_name)
 
     def _ports_disconnect(self, connection_id: int):
         for conn in self.mng.connections:
