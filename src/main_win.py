@@ -2,7 +2,7 @@
 from typing import TYPE_CHECKING
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QResizeEvent
+from PyQt5.QtGui import QResizeEvent, QKeyEvent
 from PyQt5.QtWidgets import (
     QMainWindow, QShortcut, QMenu, QApplication, QToolButton)
 
@@ -162,7 +162,11 @@ class MainWindow(QMainWindow):
     
         super().closeEvent(event)
         
-    def resizeEvent(self, event: QResizeEvent) -> None:
+    def resizeEvent(self, event: QResizeEvent):
         super().resizeEvent(event)
         self.patchbay_tools.main_win_resize(self)
+        
+    def keyPressEvent(self, event: QKeyEvent):
+        super().keyPressEvent(event)
+        self.patchbay_manager.key_press_event(event)
     
