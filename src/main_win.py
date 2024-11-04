@@ -168,5 +168,6 @@ class MainWindow(QMainWindow):
         
     def keyPressEvent(self, event: QKeyEvent):
         super().keyPressEvent(event)
-        self.patchbay_manager.key_press_event(event)
+        if self.patchbay_manager is not None:
+            self.patchbay_manager.key_press_event(event)
     

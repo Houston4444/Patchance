@@ -23,7 +23,8 @@ from pyalsa.alsaseq import (
     SEQ_EVENT_PORT_UNSUBSCRIBED,
     SequencerError
 )
-from patchbay.base_elements import JackPortFlag, PortType
+from patchbay.patchcanvas.patshared import PortType
+from patchbay.base_elements import JackPortFlag
 
 if TYPE_CHECKING:
     from patchbay.patchbay_manager import PatchbayManager
