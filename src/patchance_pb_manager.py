@@ -135,7 +135,9 @@ class PatchancePatchbayManager(PatchbayManager):
         self.portgroups_memory.eat_json(json_dict.get('portgroups'))
 
         self.sg.views_changed.emit()
-        
+        # self.change_view(self.view_number)
+        self.change_port_types_view(
+            self.views[self.view_number].default_port_types_view)
     
     def _setup_canvas(self):
         SUBMODULE = 'HoustonPatchbay'
