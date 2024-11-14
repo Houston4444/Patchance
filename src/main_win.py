@@ -1,9 +1,9 @@
 
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QResizeEvent, QKeyEvent
-from PyQt5.QtWidgets import (
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QResizeEvent, QKeyEvent
+from qtpy.QtWidgets import (
     QMainWindow, QShortcut, QMenu, QApplication, QToolButton)
 
 from about_dialog import AboutDialog

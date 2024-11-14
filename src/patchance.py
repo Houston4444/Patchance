@@ -23,6 +23,13 @@ for arg in sys.argv[1:]:
         sys.exit(0)
 
 
+import os
+from qt_api import QT_API
+
+# Needed for qtpy to know if it should use PyQt5 or PyQt6
+os.environ['QT_API'] = QT_API
+
+
 from typing import Optional
 import signal
 import logging
@@ -31,9 +38,9 @@ from dataclasses import dataclass
 from os.path import dirname
 
 
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QIcon, QFontDatabase
-from PyQt5.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings
+from qtpy.QtWidgets import QApplication
+from qtpy.QtGui import QIcon, QFontDatabase
+from qtpy.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings
 
 try:
     from pyalsa.alsaseq import SEQ_LIB_VERSION_STR

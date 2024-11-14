@@ -4,8 +4,8 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
-from PyQt5.QtCore import QSettings
-from PyQt5.QtWidgets import QApplication
+from qtpy.QtCore import QSettings
+from qtpy.QtWidgets import QApplication
 
 from patchbay import (
     CanvasMenu,

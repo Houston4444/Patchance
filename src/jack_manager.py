@@ -5,7 +5,7 @@ import threading
 import time
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import QTimer
+from qtpy.QtCore import QTimer
 
 import jacklib
 from jacklib import JackPortFlags, JackMetadata, JackOptions, JackPositionBits, JackPropertyChange

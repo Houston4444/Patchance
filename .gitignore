@@ -4,6 +4,9 @@
 !/.git
 !/.gitignore
 
+# Qt Version choice file
+/src/qt_api.py
+
 #UI builds
 /src/ui/*.py
 
