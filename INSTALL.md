@@ -7,6 +7,10 @@ To install Patchance, simply run as usual: <br/>
 `$ make` <br/>
 `$ [sudo] make install`
 
+if you prefer to build it with Qt6 (instead of Qt5), run: <br/>
+`$ QT_VERSION=6 make` <br/>
+`$ [sudo] make install`
+
 Depending on the distribution (Fedora and others) you'll need to use the LRELEASE variable to build.
 If you don't have 'lrelease' executable but 'lrelease-qt5' use:
 `$ make LRELEASE=lrelease-qt5` <br/>
@@ -27,8 +31,9 @@ To uninstall Patchance, run: <br/>
 --------------------------------
 The required build dependencies are: <i>(devel packages of these)</i>
 
- - PyQt5
- - Qt5 dev tools 
+ - qtpy
+ - PyQt5 or PyQt6
+ - Qt5 dev tools or Qt6 dev tools
  - qtchooser
 
 On Debian and Ubuntu, use these commands to install all build dependencies: <br/>
