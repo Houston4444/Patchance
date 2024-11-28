@@ -24,19 +24,20 @@ for arg in sys.argv[1:]:
 
 
 import os
+from typing import Optional
+import signal
+import logging
+from dataclasses import dataclass
+from pathlib import Path
+
+# add HoustonPatchbay and pyjacklib as libs
+sys.path.insert(1, str(Path(__file__).parents[1] / 'HoustonPatchbay'))
+sys.path.insert(1, str(Path(__file__).parents[1] / 'pyjacklib'))
+
 from qt_api import QT_API
 
 # Needed for qtpy to know if it should use PyQt5 or PyQt6
 os.environ['QT_API'] = QT_API
-
-
-from typing import Optional
-import signal
-import logging
-
-from dataclasses import dataclass
-from os.path import dirname
-
 
 from qtpy.QtWidgets import QApplication
 from qtpy.QtGui import QIcon, QFontDatabase
@@ -72,7 +73,7 @@ def signal_handler(sig, frame):
         QApplication.quit()
 
 def get_code_root():
-    return dirname(dirname(__file__))
+    return str(Path(__file__).parents[1])
 
 def make_logger():
     logger = logging.getLogger(__name__)

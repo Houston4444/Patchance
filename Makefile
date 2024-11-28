@@ -155,18 +155,20 @@ install:
 	install -m 644 resources/main_icon/scalable/patchance.svg \
 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
 
-#	# Copy patchbay themes
+    # Copy patchbay themes, manual and lib
 	cp -r HoustonPatchbay/themes $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
 	cp -r HoustonPatchbay/manual $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
+	cp -r HoustonPatchbay/patchbay $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
+
+    # Copy pyjacklib
+	cp -r pyjacklib/jacklib $(DEST_PATCHANCE)/pyjacklib/
 
 # 	# Install main code
 	cp -r src $(DEST_PATCHANCE)/
-	rm $(DEST_PATCHANCE)/src/patchbay
-	cp -r $(PATCHBAY_DIR)/patchbay $(DEST_PATCHANCE)/src/
-	rm $(DEST_PATCHANCE)/src/jacklib
-	cp -r pyjacklib/jacklib $(DEST_PATCHANCE)/src/
 	
 # 	# compile python files
+	$(PYTHON) -m compileall $(DEST_PATCHANCE)/pyjacklib/jacklib/
+	$(PYTHON) -m compileall $(DEST_PATCHANCE)/HoustonPatchbay/patchbay/
 	$(PYTHON) -m compileall $(DEST_PATCHANCE)/src/
 	
 # 	# install local manual

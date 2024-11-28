@@ -3,6 +3,7 @@
 !/.github
 !/.git
 !/.gitignore
+!/.vscode
 
 # Qt Version choice file
 /src/qt_api.py
