@@ -175,8 +175,7 @@ install:
 # 	cp -r manual $(DEST_PATCHANCE)/
 		
 #   # install main bash scripts to bin
-	install -m 755 data/patchance  $(DESTDIR)$(PREFIX)/bin/
-	sed -i "s?X-PREFIX-X?$(PREFIX)?" $(DESTDIR)$(PREFIX)/bin/patchance
+	install -m 755 data/bin/patchance  $(DESTDIR)$(PREFIX)/bin/
 
 # 	# Install Translations
 	install -m 644 locale/*.qm $(DEST_PATCHANCE)/locale/
