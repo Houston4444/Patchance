@@ -4,7 +4,11 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-sys.path[0] = str(Path(__file__).parents[1] / 'share' / 'patchance')
+sys.path[0] = str(Path(__file__).parents[1] / 'share' / 'patchance' / 'src')
 
-import src.patchance as patchance
+if TYPE_CHECKING:
+    import src.patchance as patchance
+else:
+    import patchance
+
 patchance.main_loop()
