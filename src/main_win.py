@@ -159,7 +159,7 @@ class MainWindow(QMainWindow):
         self.settings.setValue(
             'tool_bar/elements',
             self.patchbay_tools._tools_displayed.to_save_string())
-    
+        self.patchbay_manager.save_settings()
         super().closeEvent(event)
         
     def resizeEvent(self, event: QResizeEvent):

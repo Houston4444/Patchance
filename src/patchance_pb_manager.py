@@ -218,7 +218,7 @@ class PatchancePatchbayManager(PatchbayManager):
             self.server_stopped()
 
         self.set_options_dialog(
-            CanvasOptionsDialog(self.main_win, self, self._settings))
+            CanvasOptionsDialog(self.main_win, self))
 
     def save_positions(self):
         json_str = from_json_to_str(
