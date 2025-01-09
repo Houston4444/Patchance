@@ -17,9 +17,7 @@ from patchbay.base_elements import TransportPosition
 if TYPE_CHECKING:
     from patchance_pb_manager import PatchancePatchbayManager
 
-print('falfal')
 ffi = FFI()
-print('falfaf2')
 ffi.cdef("""
     typedef struct _jack_port jack_port_t;
     void set_jack_port(jack_port_t *jack_port);
