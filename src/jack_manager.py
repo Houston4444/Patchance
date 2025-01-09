@@ -4,27 +4,56 @@ import os
 import threading
 import time
 from typing import TYPE_CHECKING
+import logging
+from ctypes import pointer, c_char_p
+from cffi import FFI
+from pathlib import Path
 
 from qtpy.QtCore import QTimer
 
-import jacklib
-from jacklib import JackPortFlags, JackMetadata, JackOptions, JackPositionBits, JackPropertyChange
-from jacklib.helpers import c_char_p_p_to_list
+import jack
 
 from patchbay.base_elements import TransportPosition
 if TYPE_CHECKING:
     from patchance_pb_manager import PatchancePatchbayManager
 
+print('falfal')
+ffi = FFI()
+print('falfaf2')
+ffi.cdef("""
+    typedef struct _jack_port jack_port_t;
+    void set_jack_port(jack_port_t *jack_port);
+    int process_cb(uint32_t frames, void *arg);
+    """)
+print('fafalfa3')
+C = ffi.dlopen(str(Path(__file__).parent / 'process_cb.so'))
+print('fafafaze4')
+C.process_cb(256, ffi.NULL)
+print('Falaala5')
+
+print('client name size', jack.client_name_size(), jack.port_name_size())
+
+class JackMetadata:
+    _PREFIX = "http://jackaudio.org/metadata/"
+    CONNECTED = _PREFIX + "connected"
+    EVENT_TYPES = _PREFIX + "event-types"
+    HARDWARE = _PREFIX + "hardware"
+    ICON_LARGE = _PREFIX + "icon-large"
+    ICON_NAME = _PREFIX + "icon-name"
+    ICON_SMALL = _PREFIX + "icon-small"
+    ORDER = _PREFIX + "order"
+    PORT_GROUP = _PREFIX + "port-group"
+    PRETTY_NAME = _PREFIX + "pretty-name"
+    SIGNAL_TYPE = _PREFIX + "signal-type"
+
+
+
+_logger = logging.getLogger()
+
+
 PORT_TYPE_NULL = 0
 PORT_TYPE_AUDIO = 1
 PORT_TYPE_MIDI = 2
-
-def port_type_str_to_port_type(port_type_str: str) -> int:
-    if port_type_str == jacklib.JACK_DEFAULT_AUDIO_TYPE:
-        return PORT_TYPE_AUDIO
-    if port_type_str == jacklib.JACK_DEFAULT_MIDI_TYPE:
-        return PORT_TYPE_MIDI
-    return PORT_TYPE_NULL
 
 
 # Define a context manager to suppress stdout and stderr.
@@ -77,7 +106,7 @@ class Metadata:
 class JackManager:
     def __init__(self, patchbay_manager: 'PatchancePatchbayManager'):
         self.jack_running = False
-        self.jack_client = None
+        self.client = None
         self.patchbay_manager = patchbay_manager
 
         self._stopped_sent = False
@@ -102,68 +131,49 @@ class JackManager:
 
         self.start_jack_client()
     
-    @staticmethod
-    def get_metadata_value_str(prop: jacklib.Property) -> str:
-        value = prop.value
-        if isinstance(value, bytes):
-            return value.decode()
-        elif isinstance(value, str):
-            return value
-        else:
-            try:
-                value = str(value)
-            except:
-                return ''
-        return value
-    
     def init_the_graph(self):
         if not self.jack_running:
             return
         
-        #get all currents Jack ports and connections
-        port_name_list : list[str] = c_char_p_p_to_list(
-            jacklib.get_ports(self.jack_client, "", "", 0))
-        
-        client_names = list[str]()
+        client_names = set[str]()
         jack_ports = list[JackPort]()
         metadatas = list[Metadata]()
         
-        for port_name in port_name_list:
-            port_ptr = jacklib.port_by_name(self.jack_client, port_name)
-            port_type = port_type_str_to_port_type(jacklib.port_type(port_ptr))
-            flags = jacklib.port_flags(port_ptr)
-            uuid = jacklib.port_uuid(port_ptr)
-            
-            # self.sg.add_port.emit(port_name, port_type, flags, uuid)
-            
-            client_name = port_name.partition(':')[0]
-            if not client_name in client_names:
-                client_names.append(client_name)
+        for port in self.client.get_ports():
+            uuid = port.uuid
+            port_name = port.name
 
-            # get port metadatas
+            port_type = PORT_TYPE_NULL
+            if port.is_audio:
+                port_type = PORT_TYPE_AUDIO
+            elif port.is_midi:
+                port_type = PORT_TYPE_MIDI
+                
+            client_names.add(port_name.partition(':')[0])
+
+            flags = jack._lib.jack_port_flags(port._ptr)
+
             for key in (JackMetadata.CONNECTED,
                         JackMetadata.ORDER,
                         JackMetadata.PORT_GROUP,
-                        JackMetadata.PRETTY_NAME):            
-                prop = jacklib.get_property(uuid, key)
-                if prop is None:
+                        JackMetadata.PRETTY_NAME):
+                value_type = jack.get_property(uuid, key)
+                if value_type is None:
                     continue
-
-                value = self.get_metadata_value_str(prop)
-                metadatas.append(Metadata(uuid, key, value))
-
-            if flags & JackPortFlags.IS_INPUT:
-                jack_ports.append(JackPort(port_name, port_type, flags, uuid, []))
+                
+                value, type_ = value_type
+                metadatas.append(Metadata(uuid, key, value.decode()))
+            
+            if port.is_input:
+                jack_ports.append(
+                    JackPort(port.name, port_type, flags, uuid, []))
                 continue
             
             # this port is output, list its connections
-            port_conns = list[str]()
-            
-            for port_con_name in jacklib.port_get_all_connections(
-                    self.jack_client, port_ptr):
-                port_conns.append(port_con_name)
-
-            jack_ports.append(JackPort(port_name, port_type, flags, uuid, port_conns))
+            jack_ports.append(
+                JackPort(
+                    port.name, port_type, flags, uuid,
+                    [p.name for p in self.client.get_all_connections(port)]))
         
         for p in jack_ports:
             self.patchbay_manager.add_port(p.name, p.type, p.flags, p.uuid)
@@ -176,26 +186,29 @@ class JackManager:
                 self.patchbay_manager.add_connection(p.name, in_port_name)
         
         for client_name in client_names:
-            uuid = jacklib.get_uuid_for_client_name(self.jack_client, client_name)
-            if not uuid:
-                continue
-
-            self.patchbay_manager.set_group_uuid_from_name(client_name, int(uuid))
+            try:
+                uuid = self.client.get_uuid_for_client_name(client_name)
+                assert uuid.isdigit()
+            except:
+                continue          
+            
+            self.patchbay_manager.set_group_uuid_from_name(
+                client_name, int(uuid))
             
             # we only look for icon_name now, but in the future other client
             # metadatas could be enabled
-            for key in (JackMetadata.ICON_NAME,):
-                prop = jacklib.get_property(
-                    int(uuid), JackMetadata.ICON_NAME)
-                if prop is None:
+            for key in (JackMetadata.ICON_NAME, JackMetadata.PRETTY_NAME):
+                value_type = jack.get_property(uuid, key)
+                if value_type is None:
                     continue
-                value = self.get_metadata_value_str(prop)
-                self.patchbay_manager.metadata_update(int(uuid), key, value)
+                
+                self.patchbay_manager.metadata_update(
+                    int(uuid), key, value_type[0].decode())
         
         self.patchbay_manager.sample_rate_changed(
-            jacklib.get_sample_rate(self.jack_client))
+            self.client.samplerate)
         self.patchbay_manager.buffer_size_changed(
-            jacklib.get_buffer_size(self.jack_client))
+            self.client.blocksize)
     
     def check_jack_client_responding(self):
         for i in range(100): # JACK has 5s to answer
@@ -225,22 +238,19 @@ class JackManager:
         jack_waiter_thread.start()
 
         with suppress_stdout_stderr():
-            self.jack_client = jacklib.client_open(
-                "Patchance",
-                JackOptions.NO_START_SERVER | JackOptions.SESSION_ID,
-                None)
+            self.client = jack.Client('Patchance', no_start_server=True)
 
         self._waiting_jack_client_open = False
 
         jack_waiter_thread.join()
 
-        if self.jack_client:
+        if not self.client.status.failure:
             self.jack_running = True
             self._stopped_sent = False
             self.set_registrations()
             self.init_the_graph()
-            self.samplerate = jacklib.get_sample_rate(self.jack_client)
-            self.buffer_size = jacklib.get_buffer_size(self.jack_client)
+            self.samplerate = self.client.samplerate
+            self.buffer_size = self.client.blocksize
             self.patchbay_manager.server_started()
             self._dsp_timer.start()
             self._transport_timer.start()
@@ -256,7 +266,7 @@ class JackManager:
         if not self.jack_running:
             return
         
-        current_dsp = math.ceil(jacklib.cpu_load(self.jack_client))
+        current_dsp = math.ceil(self.client.cpu_load())
 
         if self._dsp_n >= 5:
             self._dsp_n = 0
@@ -279,191 +289,169 @@ class JackManager:
         if not self.jack_running:
             return
         
-        pos = jacklib.jack_position_t()
-        pos.valid = 0
-
-        state = jacklib.transport_query(self.jack_client, jacklib.pointer(pos))
+        state, pos_dict = self.client.transport_query()
 
         transport_position = TransportPosition(
-            int(pos.frame),
-            bool(state),
-            bool(pos.valid & JackPositionBits.POSITION_BBT),
-            int(pos.bar),
-            int(pos.beat),
-            int(pos.tick),
-            float(pos.beats_per_minute))
+            pos_dict['frame'],
+            state == jack.ROLLING,
+            'bar' in pos_dict,
+            pos_dict.get('bar', 0),
+            pos_dict.get('beat', 0),
+            pos_dict.get('tick', 0),
+            pos_dict.get('beats_per_minute', 0.0))
         
         if transport_position == self._last_transport_pos:
             return
         
         self._last_transport_pos = transport_position
-
         self.patchbay_manager.refresh_transport(transport_position)
 
     def is_jack_running(self) -> bool:
-        if self.jack_client is None:
+        if self.client is None:
             return False
         
         return True
     
     def exit(self):
-        if self.jack_client is not None:
-            jacklib.deactivate(self.jack_client)
-            jacklib.client_close(self.jack_client)
+        if self.client is not None:
+            self.client.deactivate()
+            self.client.close()
                 
     def get_buffer_size(self) -> int:
-        if self.jack_client is not None:
-            return jacklib.get_buffer_size(self.jack_client)
+        if self.client is None:
+            return 0
+        return self.client.blocksize
     
     def get_sample_rate(self) -> int:
-        if self.jack_client is not None:
-            return jacklib.get_sample_rate((self.jack_client))
+        if self.client is None:
+            return 0
+        return self.client.samplerate
     
     def set_buffer_size(self, buffer_size: int):
-        if self.jack_client is None:
+        if self.client is None:
+            return
+        self.client.blocksize = buffer_size
+        
+    def connect_ports(self, port_out_name: str, port_in_name: str):
+        if self.client is None:
             return
         
-        jacklib.set_buffer_size(self.jack_client, buffer_size)
-    
-    def connect_ports(self, port_out_name: str, port_in_name: str):
-        if self.jack_client is None:
-            return
-
-        jacklib.connect(self.jack_client, port_out_name, port_in_name)
+        self.client.connect(port_out_name, port_in_name)
     
     def disconnect_ports(self, port_out_name: str, port_in_name: str):
-        if self.jack_client is None:
-            return
-        jacklib.disconnect(self.jack_client, port_out_name, port_in_name)
-    
-    # jacklib callbacks
-    
-    def jack_client_registration_callback(self, client_name: bytes,
-                                          register: int, arg=None) -> int:
-        return 0
-    
-    def jack_port_registration_callback(self, port_id: int, register: bool,
-                                        arg=None) -> int:
-        
-        if self.jack_client is None:
+        if self.client is None:
             return
         
+        self.client.disconnect(port_out_name, port_in_name)
+    
+    def set_metadata(self, uuid: int, key: str, mdata: str):
+        if mdata == '':
+            self.client.remove_property(uuid, key)            
+            return
         
-        port_ptr = jacklib.port_by_id(self.jack_client, port_id)
-        port_name = jacklib.port_name(port_ptr)
-        
-        if register:
-            port_type_str = jacklib.port_type(port_ptr)
-            port_type = PORT_TYPE_NULL
-            
-            if port_type_str == jacklib.JACK_DEFAULT_AUDIO_TYPE:
-                port_type = PORT_TYPE_AUDIO
-            elif port_type_str == jacklib.JACK_DEFAULT_MIDI_TYPE:
-                port_type = PORT_TYPE_MIDI
-            
-            flags = jacklib.port_flags(port_ptr)
-            uuid =jacklib.port_uuid(port_ptr)
-            self.patchbay_manager.add_port(port_name, port_type, flags, uuid)
+        if key == JackMetadata.PRETTY_NAME:
+            type_ = 'text/plain'
         else:
-            self.patchbay_manager.remove_port(port_name)
-
-        return 0
-    
-    def jack_port_connect_callback(self, port_id_A: int, port_id_B: int,
-                                   connect_yesno: bool, arg=None) -> int:
-        port_name_a = jacklib.port_name(
-            jacklib.port_by_id(self.jack_client, port_id_A))
-        port_name_b = jacklib.port_name(
-            jacklib.port_by_id(self.jack_client, port_id_B))
+            type_ = None
         
-        if connect_yesno:
-            self.patchbay_manager.add_connection(port_name_a, port_name_b)
-        else:
-            self.patchbay_manager.remove_connection(port_name_a, port_name_b)
-        return 0
-    
-    def jack_port_rename_callback(self, port_id: int, old_name: bytes,
-                                  new_name: bytes, arg=None) -> int:
-        self.patchbay_manager.rename_port(old_name.decode(), new_name.decode())
-        return 0
-    
-    def jack_xrun_callback(self, arg=None) -> int:
-        self.patchbay_manager.add_xrun()
-        return 0
-    
-    def jack_buffer_size_callback(self, buffer_size: int, arg=None):
-        self.patchbay_manager.buffer_size_changed(buffer_size)
-        return 0
-    
-    def jack_sample_rate_callback(self, samplerate, arg=None) -> int:
-        self.patchbay_manager.sample_rate_changed(samplerate)
-        return 0
-    
-    def jack_properties_change_callback(self, uuid: int, name: bytes,
-                                        type_: int, arg=None) -> int:
-        if name is not None:
-            name = name.decode()
-        
-        value = ''
-
-        if name and type_ != JackPropertyChange.DELETED:
-            prop = jacklib.get_property(uuid, name)
-            if prop is None:
-                return 0
-            
-            value = self.get_metadata_value_str(prop)
-        
-        self.patchbay_manager.metadata_update(int(uuid), name, value)
-        
-        return 0
-    
-    def jack_shutdown_callback(self, arg=None) -> int:
-        self.jack_running = False
-        self.patchbay_manager.server_stopped()
-        return 0
+        self.client.set_property(uuid, key, mdata, type_)
     
     def set_registrations(self):
-        if not self.jack_client:
+        if self.client is None:
             return
+
+        @self.client.set_port_registration_callback
+        def port_registration(port: jack.Port, register: bool):
+            if register:
+                flags = jack._lib.jack_port_flags(port._ptr)
+                port_type_int = 0
+                if port.is_audio:
+                    port_type_int = 1
+                elif port.is_midi:
+                    port_type_int = 2
+
+                self.patchbay_manager.add_port(
+                    port.name, port_type_int, flags, port.uuid)
+            else:
+                self.patchbay_manager.remove_port(port.name)
+                
+        @self.client.set_port_connect_callback
+        def port_connect(port_a: jack.Port, port_b: jack.Port, connect: bool):
+            if connect:
+                self.patchbay_manager.add_connection(
+                    port_a.name, port_b.name)
+            else:
+                self.patchbay_manager.remove_connection(
+                    port_a.name, port_b.name)
+
+        @self.client.set_port_rename_callback
+        def port_rename(port: JackPort, old: str, new: str):
+            self.patchbay_manager.rename_port(old, new)
+
+        @self.client.set_xrun_callback
+        def xrun(delayed_usecs: float):
+            self.patchbay_manager.add_xrun()
+            
+        @self.client.set_blocksize_callback
+        def blocksize(size: int):
+            self.patchbay_manager.buffer_size_changed(size)
+            
+        @self.client.set_samplerate_callback
+        def samplerate(samplerate: int):
+            self.patchbay_manager.sample_rate_changed(samplerate)
         
-        jacklib.set_client_registration_callback(
-            self.jack_client, self.jack_client_registration_callback, None)
-        jacklib.set_port_registration_callback(
-            self.jack_client, self.jack_port_registration_callback, None)
-        jacklib.set_port_connect_callback(
-            self.jack_client, self.jack_port_connect_callback, None)
-        jacklib.set_port_rename_callback(
-            self.jack_client, self.jack_port_rename_callback, None)
-        jacklib.set_xrun_callback(
-            self.jack_client, self.jack_xrun_callback, None)
-        jacklib.set_buffer_size_callback(
-            self.jack_client, self.jack_buffer_size_callback, None)
-        jacklib.set_sample_rate_callback(
-            self.jack_client, self.jack_sample_rate_callback, None)
-        jacklib.set_property_change_callback(
-            self.jack_client, self.jack_properties_change_callback, None)
-        jacklib.on_shutdown(
-            self.jack_client, self.jack_shutdown_callback, None)
-        jacklib.activate(self.jack_client)
+        try:
+            @self.client.set_property_change_callback
+            def property_change(subject: int, key: str, change: int):
+                value = ''
+                
+                if change != jack.PROPERTY_DELETED:
+                    value_type = jack.get_property(subject, key)
+                    if value_type is None:
+                        value = ''
+                    else:
+                        value, type_ = value_type
+                        value = value.decode()
+                
+                self.patchbay_manager.metadata_update(
+                    subject, key, value)
+
+
+        except jack.JackError as e:
+            _logger.warning(
+                "jack-metadatas are not available,"
+                "probably due to the way JACK has been compiled."
+                + str(e))
+        
+        @self.client.set_shutdown_callback
+        def on_shutdown(status: jack.Status, reason: str):
+            self.jack_running = False
+            self.patchbay_manager.server_stopped()
+
+        jack._lib.jack_set_process_callback(self.client._ptr, C.process_cb, ffi.NULL)
+        self.client.activate()
         
     def transport_start(self):
-        if self.jack_client is None:
+        if self.client is None:
             return
-        jacklib.transport_start(self.jack_client)
+        
+        self.client.transport_start()
     
     def transport_pause(self):
-        if self.jack_client is None:
+        if self.client is None:
             return
-        jacklib.transport_stop(self.jack_client)
+        
+        self.client.transport_stop()
         
     def transport_stop(self):
-        if self.jack_client is None:
-            return
-        jacklib.transport_stop(self.jack_client)
-        jacklib.transport_locate(self.jack_client, 0)
-    
-    def transport_relocate(self, frame: int):
-        if self.jack_client is None:
+        if self.client is None:
             return
         
-        jacklib.transport_locate(self.jack_client, frame)
+        self.client.transport_stop()
+        self.client.transport_frame = 0
+    
+    def transport_relocate(self, frame: int):
+        if self.client is None:
+            return
+        
+        self.client.transport_frame = frame

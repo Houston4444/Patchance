@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Union
 
 from qtpy.QtCore import QSettings
 from qtpy.QtWidgets import QApplication
+from jacklib.enums import JackMetadata
 
 from patchbay import (
     CanvasMenu,
@@ -33,7 +34,29 @@ class PatchanceCallbacker(Callbacker):
 
         if TYPE_CHECKING:
             self.mng = manager
+    
+    def _group_rename(self, group_id: int, pretty_name: str):
+        group = self.mng.get_group_from_id(group_id)
+        if group is None:
+            return
         
+        if not group.uuid:
+            return
+        
+        if self.mng.jack_mng is None:
+            return
+        
+        self.mng.jack_mng.set_metadata(
+            group.uuid, JackMetadata.PRETTY_NAME, pretty_name)
+    
+    def _port_rename(self, group_id: int, port_id: int, pretty_name: str):
+        port = self.mng.get_port_from_id(group_id, port_id)
+        if port is None:
+            return
+        
+        self.mng.jack_mng.set_metadata(
+            port.uuid, JackMetadata.PRETTY_NAME, pretty_name)
+    
     def _ports_connect(self, group_out_id: int, port_out_id: int,
                        group_in_id: int, port_in_id: int):
         port_out = self.mng.get_port_from_id(group_out_id, port_out_id)
