@@ -39,24 +39,44 @@ class PatchanceCallbacker(Callbacker):
         group = self.mng.get_group_from_id(group_id)
         if group is None:
             return
-        
-        if not group.uuid:
-            return
-        
+                
+        self.mng.pretty_names.save_group(
+            group.name, pretty_name, group.pretty_name)
+
         if self.mng.jack_mng is None:
             return
         
-        self.mng.jack_mng.set_metadata(
-            group.uuid, JackMetadata.PRETTY_NAME, pretty_name)
-    
+        if group.a2j_group:
+            for port in group.ports:
+                if port.type is not PortType.MIDI_JACK:
+                    continue
+
+                if not port.uuid:
+                    continue
+                
+                self.mng.jack_mng.set_metadata(
+                    port.uuid,
+                    JackMetadata.MIDI_BRIDGE_GROUP_PRETTY_NAME,
+                    pretty_name)
+        else:
+            if not group.uuid:
+                return
+        
+            self.mng.jack_mng.set_metadata(
+                group.uuid, JackMetadata.PRETTY_NAME, pretty_name)
+
     def _port_rename(self, group_id: int, port_id: int, pretty_name: str):
         port = self.mng.get_port_from_id(group_id, port_id)
         if port is None:
             return
         
-        self.mng.jack_mng.set_metadata(
-            port.uuid, JackMetadata.PRETTY_NAME, pretty_name)
-    
+        self.mng.pretty_names.save_port(
+            port.full_name, pretty_name, port.pretty_name)
+
+        if port.type in (PortType.AUDIO_JACK, PortType.MIDI_JACK):
+            self.mng.jack_mng.set_metadata(
+                port.uuid, JackMetadata.PRETTY_NAME, pretty_name)
+
     def _ports_connect(self, group_out_id: int, port_out_id: int,
                        group_in_id: int, port_in_id: int):
         port_out = self.mng.get_port_from_id(group_out_id, port_out_id)
@@ -102,6 +122,7 @@ class PatchancePatchbayManager(PatchbayManager):
         self.jack_mng = None
         self.alsa_mng = None
         self._memory_path = None
+
         self._load_memory_file()
 
     def _load_memory_file(self):
@@ -155,10 +176,11 @@ class PatchancePatchbayManager(PatchbayManager):
                 self.views.add_old_json_gpos(gpos_dict)
         
         self.view_number = self.views.first_view_num()
+
         self.portgroups_memory.eat_json(json_dict.get('portgroups'))
+        self.pretty_names.eat_json(json_dict.get('pretty_names'))
 
         self.sg.views_changed.emit()
-        # self.change_view(self.view_number)
         self.change_port_types_view(
             self.views[self.view_number].default_port_types_view)
     
@@ -244,9 +266,11 @@ class PatchancePatchbayManager(PatchbayManager):
             CanvasOptionsDialog(self.main_win, self))
 
     def save_positions(self):
+        '''Save patchbay boxes positions and pretty names'''
         json_str = from_json_to_str(
             {'views': self.views.to_json_list(),
-             'portgroups': self.portgroups_memory.to_json()})
+             'portgroups': self.portgroups_memory.to_json(),
+             'pretty_names': self.pretty_names.to_json()})
 
         if self._memory_path is not None:
             try:
