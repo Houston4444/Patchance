@@ -502,7 +502,20 @@ class JackManager:
 
         @self.client.set_port_rename_callback
         def port_rename(port: JackPort, old: str, new: str):
+            # if the pretty name has been seems to have been set by this
+            # jack client, we delete the pretty_name metadata
+            # because there are big chances that this name is not well now.
+            internal_pretty = \
+                self.patchbay_manager.pretty_names.pretty_port(old)
+            value_type = jack.get_property(port.uuid, JackMetadata.PRETTY_NAME)
+            if value_type is not None:
+                pretty = value_type[0].decode()
+                if pretty == internal_pretty:
+                    self.set_metadata(port.uuid, JackMetadata.PRETTY_NAME, '')
+                
             self.patchbay_manager.rename_port(old, new)
+            self._check_pretty_queue.put_nowait(
+                (False, True, new, time.time()))
 
         @self.client.set_xrun_callback
         def xrun(delayed_usecs: float):

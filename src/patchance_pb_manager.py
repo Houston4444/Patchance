@@ -39,11 +39,6 @@ class PatchanceCallbacker(Callbacker):
         group = self.mng.get_group_from_id(group_id)
         if group is None:
             return
-                
-        self.mng.pretty_names.save_group(
-            group.name, pretty_name, group.pretty_name)
-        group.pretty_name = pretty_name
-        group.redraw_in_canvas()
 
         if self.mng.jack_mng is None:
             return
@@ -71,11 +66,6 @@ class PatchanceCallbacker(Callbacker):
         port = self.mng.get_port_from_id(group_id, port_id)
         if port is None:
             return
-        
-        self.mng.pretty_names.save_port(
-            port.full_name, pretty_name, port.pretty_name)
-        port.pretty_name = pretty_name
-        port.rename_in_canvas()
 
         if port.type in (PortType.AUDIO_JACK, PortType.MIDI_JACK):
             self.mng.jack_mng.set_metadata(
