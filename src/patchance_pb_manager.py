@@ -13,7 +13,7 @@ from patchbay import (
     Callbacker,
     CanvasOptionsDialog,
     PatchbayManager)
-from patchbay.patchcanvas.patshared import (
+from patshared import (
     PortType, PortTypesViewFlag, from_json_to_str)
 
 from tools import get_code_root
@@ -93,7 +93,7 @@ class PatchanceCallbacker(Callbacker):
     def _ports_disconnect(self, connection_id: int):
         for conn in self.mng.connections:
             if conn.connection_id == connection_id:
-                if conn.port_type() is PortType.MIDI_ALSA:
+                if conn.port_type is PortType.MIDI_ALSA:
                     if self.mng.alsa_mng is None:
                         return
                     

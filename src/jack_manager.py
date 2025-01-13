@@ -502,9 +502,9 @@ class JackManager:
 
         @self.client.set_port_rename_callback
         def port_rename(port: JackPort, old: str, new: str):
-            # if the pretty name has been seems to have been set by this
+            # if the pretty name seems to have been set by this
             # jack client, we delete the pretty_name metadata
-            # because there are big chances that this name is not well now.
+            # because there are big chances that this name is not well now.            
             internal_pretty = \
                 self.patchbay_manager.pretty_names.pretty_port(old)
             value_type = jack.get_property(port.uuid, JackMetadata.PRETTY_NAME)
