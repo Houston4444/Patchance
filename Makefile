@@ -158,7 +158,7 @@ install:
     # Copy patchbay themes, manual and lib
 	cp -r HoustonPatchbay/themes $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
 	cp -r HoustonPatchbay/manual $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
-	cp -r HoustonPatchbay/patchbay $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
+	cp -r HoustonPatchbay/source $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
 
     # Copy pyjacklib
 	cp -r pyjacklib/jacklib $(DEST_PATCHANCE)/pyjacklib/
@@ -168,7 +168,7 @@ install:
 	
 # 	# compile python files
 	$(PYTHON) -m compileall $(DEST_PATCHANCE)/pyjacklib/jacklib/
-	$(PYTHON) -m compileall $(DEST_PATCHANCE)/HoustonPatchbay/patchbay/
+	$(PYTHON) -m compileall $(DEST_PATCHANCE)/HoustonPatchbay/source/
 	$(PYTHON) -m compileall $(DEST_PATCHANCE)/src/
 	
 # 	# install local manual
