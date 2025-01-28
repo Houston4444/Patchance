@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Union
 
 from qtpy.QtCore import QSettings
 from qtpy.QtWidgets import QApplication
-from jacklib.enums import JackMetadata
+from patshared import JackMetadata
 
 from patchbay import (
     CanvasMenu,

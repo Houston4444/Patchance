@@ -32,7 +32,6 @@ from pathlib import Path
 
 # add HoustonPatchbay and pyjacklib as libs
 sys.path.insert(1, str(Path(__file__).parents[1] / 'HoustonPatchbay/source'))
-sys.path.insert(1, str(Path(__file__).parents[1] / 'pyjacklib'))
 
 from qt_api import QT_API
 
