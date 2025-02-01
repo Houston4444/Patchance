@@ -6,48 +6,15 @@ import time
 from typing import TYPE_CHECKING
 import logging
 from queue import Queue
-from ctypes import pointer, c_char_p
-from cffi import FFI
-from pathlib import Path
 
 from qtpy.QtCore import QTimer
 
 import jack
 
+from patshared import JackMetadata
 from patchbay.base_elements import TransportPosition
 if TYPE_CHECKING:
     from patchance_pb_manager import PatchancePatchbayManager
-
-# ffi = FFI()
-# ffi.cdef("""
-#     typedef struct _jack_port jack_port_t;
-#     void set_jack_port(jack_port_t *jack_port);
-#     int process_cb(uint32_t frames, void *arg);
-#     """)
-# print('fafalfa3')
-# C = ffi.dlopen(str(Path(__file__).parent / 'process_cb.so'))
-# print('fafafaze4')
-# C.process_cb(256, ffi.NULL)
-# print('Falaala5')
-
-# print('client name size', jack.client_name_size(), jack.port_name_size())
-
-class JackMetadata:
-    _PREFIX = "http://jackaudio.org/metadata/"
-    CONNECTED = _PREFIX + "connected"
-    EVENT_TYPES = _PREFIX + "event-types"
-    HARDWARE = _PREFIX + "hardware"
-    ICON_LARGE = _PREFIX + "icon-large"
-    ICON_NAME = _PREFIX + "icon-name"
-    ICON_SMALL = _PREFIX + "icon-small"
-    ORDER = _PREFIX + "order"
-    PORT_GROUP = _PREFIX + "port-group"
-    PRETTY_NAME = _PREFIX + "pretty-name"
-    SIGNAL_TYPE = _PREFIX + "signal-type"
-
-    # Specific to HoustonPatchbay
-    MIDI_BRIDGE_GROUP_PRETTY_NAME = \
-        "HoustonPatchbay/midi-bridge-pretty-name"
 
 
 _logger = logging.getLogger()
@@ -106,10 +73,12 @@ class Metadata:
 
 
 class JackManager:
-    def __init__(self, patchbay_manager: 'PatchancePatchbayManager'):
+    def __init__(self, patchbay_manager: 'PatchancePatchbayManager',
+                 metadata_auto_restore: bool):
         self.jack_running = False
         self.client = None
         self.patchbay_manager = patchbay_manager
+        self.mdata_auto_restore = metadata_auto_restore
 
         self._stopped_sent = False
 
@@ -174,6 +143,9 @@ class JackManager:
                     value = value_type[0].decode()
                     metadatas.append(Metadata(port_uuid, key, value))
             
+                if not self.mdata_auto_restore:
+                    continue
+
                 # write pretty_name metadatas on port from config
                 if key == JackMetadata.PRETTY_NAME:
                     pretty_name = pretty_names.pretty_port(port_name, value)
@@ -226,11 +198,13 @@ class JackManager:
                     self.patchbay_manager.metadata_update(
                         int(client_uuid), key, value)
 
-                if key == JackMetadata.PRETTY_NAME:
-                    pretty_name = pretty_names.pretty_group(client_name, value)
+                if (self.mdata_auto_restore
+                        and key == JackMetadata.PRETTY_NAME):
+                    pretty_name = pretty_names.pretty_group(
+                        client_name, value)
                     if pretty_name:
                         self.set_metadata(client_uuid, key, pretty_name)
-                    
+
         self.patchbay_manager.sample_rate_changed(
             self.client.samplerate)
         self.patchbay_manager.buffer_size_changed(
@@ -251,7 +225,6 @@ class JackManager:
     
     def start_jack_client(self):
         if self.jack_running:
-            # self._jack_checker_timer.stop()
             return
         
         self._waiting_jack_client_open = True
@@ -310,6 +283,9 @@ class JackManager:
         to set itself this metadata,
         then this method decides to overwrite it or not.'''
         if not self.jack_running:
+            return
+        
+        if not self.mdata_auto_restore:
             return
         
         port_names = set[str]()
@@ -502,17 +478,20 @@ class JackManager:
 
         @self.client.set_port_rename_callback
         def port_rename(port: JackPort, old: str, new: str):
-            # if the pretty name seems to have been set by this
-            # jack client, we delete the pretty_name metadata
-            # because there are big chances that this name is not well now.            
-            internal_pretty = \
-                self.patchbay_manager.pretty_names.pretty_port(old)
-            value_type = jack.get_property(port.uuid, JackMetadata.PRETTY_NAME)
-            if value_type is not None:
-                pretty = value_type[0].decode()
-                if pretty == internal_pretty:
-                    self.set_metadata(port.uuid, JackMetadata.PRETTY_NAME, '')
-                
+            if self.mdata_auto_restore:
+                # if the pretty name seems to have been set by this
+                # jack client, we delete the pretty_name metadata
+                # because there are big chances that this name is not well now.
+                internal_pretty = \
+                    self.patchbay_manager.pretty_names.pretty_port(old)
+                value_type = jack.get_property(
+                    port.uuid, JackMetadata.PRETTY_NAME)
+                if value_type is not None:
+                    pretty = value_type[0].decode()
+                    if pretty == internal_pretty:
+                        self.set_metadata(
+                            port.uuid, JackMetadata.PRETTY_NAME, '')
+
             self.patchbay_manager.rename_port(old, new)
             self._check_pretty_queue.put_nowait(
                 (False, True, new, time.time()))
@@ -520,15 +499,15 @@ class JackManager:
         @self.client.set_xrun_callback
         def xrun(delayed_usecs: float):
             self.patchbay_manager.add_xrun()
-            
+
         @self.client.set_blocksize_callback
         def blocksize(size: int):
             self.patchbay_manager.buffer_size_changed(size)
-            
+
         @self.client.set_samplerate_callback
         def samplerate(samplerate: int):
             self.patchbay_manager.sample_rate_changed(samplerate)
-        
+
         try:
             @self.client.set_property_change_callback
             def property_change(subject: int, key: str, change: int):

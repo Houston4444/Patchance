@@ -128,7 +128,9 @@ def main_loop():
     settings = QSettings()
     main_win = MainWindow()
     pb_manager = PatchancePatchbayManager(settings)
-    jack_manager = JackManager(pb_manager)
+    enable_metadata_set = settings.value(
+        'Metadatas/enable_auto_restore', True, type=bool)
+    jack_manager = JackManager(pb_manager, enable_metadata_set)
     
     if ALSA_LIB_OK:
         alsa_manager = AlsaManager(pb_manager)
