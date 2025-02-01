@@ -105,6 +105,8 @@ class JackManager:
         self._check_pretty_queue = Queue[tuple[bool, bool, str, float]]()
         
         self._last_transport_pos = None
+        
+        self._client_uuids_sent = dict[str, int]()
 
         self.start_jack_client()
     
@@ -190,6 +192,8 @@ class JackManager:
             
             self.patchbay_manager.set_group_uuid_from_name(
                 client_name, int(client_uuid))
+            
+            self._client_uuids_sent[client_name] = int(client_uuid)
 
             for key in (JackMetadata.ICON_NAME, JackMetadata.PRETTY_NAME):
                 value_type = jack.get_property(client_uuid, key)
@@ -204,6 +208,11 @@ class JackManager:
                         client_name, value)
                     if pretty_name:
                         self.set_metadata(client_uuid, key, pretty_name)
+
+        for uuid, uuid_dict in jack.get_all_properties().items():
+            for key, value_type in uuid_dict.items():
+                value = value_type[0].decode()
+                self.patchbay_manager.metadata_update(uuid, key, value)
 
         self.patchbay_manager.sample_rate_changed(
             self.client.samplerate)
@@ -285,8 +294,8 @@ class JackManager:
         if not self.jack_running:
             return
         
-        if not self.mdata_auto_restore:
-            return
+        # if not self.mdata_auto_restore:
+        #     return
         
         port_names = set[str]()
         client_names = set[str]()
@@ -294,6 +303,7 @@ class JackManager:
         while self._check_pretty_queue.qsize():
             for_client, add, name, add_time = \
                 self._check_pretty_queue.queue[0]
+            
             if time.time() - add_time < 0.200:
                 break
             
@@ -305,31 +315,38 @@ class JackManager:
             else:
                 if add: port_names.add(name)
                 else: port_names.discard(name)
+        
+        if self.mdata_auto_restore:
+            for port_name in port_names:
+                try:
+                    port = self.client.get_port_by_name(port_name)
+                except jack.JackError:
+                    continue
                 
-        for port_name in port_names:
-            try:
-                port = self.client.get_port_by_name(port_name)
-            except jack.JackError:
-                continue
-            
-            value_type = jack.get_property(
-                port.uuid, JackMetadata.PRETTY_NAME)
-            if value_type is None:
-                cur_pretty_name = ''
-            else:
-                cur_pretty_name = value_type[0]
+                value_type = jack.get_property(
+                    port.uuid, JackMetadata.PRETTY_NAME)
+                if value_type is None:
+                    cur_pretty_name = ''
+                else:
+                    cur_pretty_name = value_type[0]
 
-            pretty_name = self.patchbay_manager.pretty_names.pretty_port(
-                port_name, cur_pretty_name)
-            if pretty_name:
-                self.set_metadata(
-                    port.uuid, JackMetadata.PRETTY_NAME, pretty_name)
+                pretty_name = self.patchbay_manager.pretty_names.pretty_port(
+                    port_name, cur_pretty_name)
+                if pretty_name:
+                    self.set_metadata(
+                        port.uuid, JackMetadata.PRETTY_NAME, pretty_name)
                 
         for client_name in client_names:
             try:
                 client_uuid = self.client.get_uuid_for_client_name(
                     client_name)
             except jack.JackError:
+                continue
+
+            self.patchbay_manager.set_group_uuid_from_name(
+                client_name, int(client_uuid))
+            
+            if not self.mdata_auto_restore:
                 continue
             
             value_type = jack.get_property(
@@ -523,7 +540,6 @@ class JackManager:
                 
                 self.patchbay_manager.metadata_update(
                     subject, key, value)
-
 
         except jack.JackError as e:
             _logger.warning(
