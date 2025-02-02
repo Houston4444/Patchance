@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -u
+#!/usr/bin/env -S python3 -u
 
 APP_TITLE = 'Patchance'
 VERSION = (1, 1, 0)
@@ -30,7 +30,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-# add HoustonPatchbay and pyjacklib as libs
+# add HoustonPatchbay as lib
 sys.path.insert(1, str(Path(__file__).parents[1] / 'HoustonPatchbay/source'))
 
 from qt_api import QT_API
