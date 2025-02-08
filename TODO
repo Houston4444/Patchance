@@ -15,6 +15,9 @@ couleurs ALSA tous themes
 
 
 Pretty names dans Patchance:
+    Attention ! dû au numero de client ALSA dans port full name,
+    il est largement possible qu'un pretty name sur port ALSA ne soit pas restaurée.
+
     action:
         sauvegarder direct dans la base du patchbay
         appliquer les métadonnées immédiatement
@@ -26,5 +29,4 @@ Pretty names dans Patchance:
         appliquer les métadonnées par rapport à la base
             après la liste du graphe
             Xms après l'apparition d'un port ou d'un client (200ms ?)
-
 
