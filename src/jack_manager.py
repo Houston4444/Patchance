@@ -13,6 +13,7 @@ import jack
 
 from patshared import JackMetadata, Naming
 from patchbay.base_elements import TransportPosition
+from patshared.jack_metadata import JackMetadatas
 if TYPE_CHECKING:
     from patchance_pb_manager import PatchancePatchbayManager
 
@@ -122,8 +123,8 @@ class JackManager:
         pretty_names = self.patchbay_manager.pretty_names
         client_names = set[str]()
         jack_ports = list[JackPort]()
-        metadatas = list[Metadata]()
         
+        # add all ports to jack_ports
         for port in self.client.get_ports():
             port_uuid = port.uuid
             port_name = port.name
@@ -138,26 +139,6 @@ class JackManager:
 
             flags = jack._lib.jack_port_flags(port._ptr)
 
-            for key in (JackMetadata.CONNECTED,
-                        JackMetadata.ORDER,
-                        JackMetadata.PORT_GROUP,
-                        JackMetadata.PRETTY_NAME):
-                value_type = jack.get_property(port_uuid, key)
-                value = ''
-
-                if value_type is not None:
-                    value = value_type[0].decode()
-                    metadatas.append(Metadata(port_uuid, key, value))
-            
-                if not self.writes_pretty_names:
-                    continue
-
-                # write pretty_name metadatas on port from config
-                if key == JackMetadata.PRETTY_NAME:
-                    pretty_name = pretty_names.pretty_port(port_name, value)
-                    if pretty_name:
-                        self.set_metadata(port_uuid, key, pretty_name)
-
             if port.is_input:
                 jack_ports.append(
                     JackPort(port.name, port_type, flags, port_uuid, []))
@@ -169,16 +150,16 @@ class JackManager:
                     port.name, port_type, flags, port_uuid,
                     [p.name for p in self.client.get_all_connections(port)]))
         
+        # add all ports to patchbay manager
         for p in jack_ports:
             self.patchbay_manager.add_port(p.name, p.type, p.flags, p.uuid)
-        
-        for m in metadatas:
-            self.patchbay_manager.metadata_update(m.uuid, m.key, m.value)
-        
+
+        # add all connections to patchbay_manager       
         for p in jack_ports:
             for in_port_name in p.conns:
                 self.patchbay_manager.add_connection(p.name, in_port_name)
         
+        # associate group names and uuids in patchbay manager
         for client_name in client_names:
             try:
                 client_uuid = self.client.get_uuid_for_client_name(client_name)
@@ -191,24 +172,44 @@ class JackManager:
             
             self._client_uuids_sent[client_name] = int(client_uuid)
 
-            for key in (JackMetadata.ICON_NAME, JackMetadata.PRETTY_NAME):
-                value_type = jack.get_property(client_uuid, key)
-                if value_type is not None:                
-                    value = value_type[0].decode()
-                    self.patchbay_manager.metadata_update(
-                        int(client_uuid), key, value)
-
-                if (key == JackMetadata.PRETTY_NAME
-                        and self.writes_pretty_names):
-                    pretty_name = pretty_names.pretty_group(
-                        client_name, value)
-                    if pretty_name:
-                        self.set_metadata(client_uuid, key, pretty_name)
+        all_metadatas = dict[int, dict[str, str]]()
+        jack_metadatas = JackMetadatas()
 
         for uuid, uuid_dict in jack.get_all_properties().items():
+            all_metadatas[uuid] = dict[str, str]()
+
             for key, value_type in uuid_dict.items():
                 value = value_type[0].decode()
+                all_metadatas[uuid][key] = value
+                jack_metadatas.add(uuid, key, value)
                 self.patchbay_manager.metadata_update(uuid, key, value)
+
+        if self.writes_pretty_names:
+            for client_name in client_names:
+                uuid = self._client_uuids_sent.get(client_name)
+                if uuid is None:
+                    continue
+                
+                mdata_pretty_name = jack_metadatas.pretty_name(uuid)
+                pretty_name = pretty_names.pretty_group(
+                    client_name, mdata_pretty_name)
+
+                if pretty_name:
+                    self.set_metadata(
+                        uuid, JackMetadata.PRETTY_NAME, pretty_name)
+                    
+            for port in self.client.get_ports():
+                port_uuid = port.uuid
+                if not port_uuid:
+                    continue
+
+                mdata_pretty_name = jack_metadatas.pretty_name(uuid)
+                pretty_name = pretty_names.pretty_port(
+                    port.name, mdata_pretty_name)
+
+                if pretty_name:
+                    self.set_metadata(
+                        port_uuid, JackMetadata.PRETTY_NAME, pretty_name)
 
         self.patchbay_manager.sample_rate_changed(
             self.client.samplerate)
