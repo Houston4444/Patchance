@@ -43,24 +43,11 @@ class PatchanceCallbacker(Callbacker):
         if self.mng.jack_mng is None:
             return
         
-        if group.a2j_group:
-            for port in group.ports:
-                if port.type is not PortType.MIDI_JACK:
-                    continue
-
-                if not port.uuid:
-                    continue
-                
-                self.mng.jack_mng.set_metadata(
-                    port.uuid,
-                    JackMetadata.MIDI_BRIDGE_GROUP_PRETTY_NAME,
-                    pretty_name)
-        else:
-            if not group.uuid:
-                return
-        
-            self.mng.jack_mng.set_metadata(
-                group.uuid, JackMetadata.PRETTY_NAME, pretty_name)
+        if not group.uuid:
+            return
+    
+        self.mng.jack_mng.set_metadata(
+            group.uuid, JackMetadata.PRETTY_NAME, pretty_name)
 
     def _port_rename(self, group_id: int, port_id: int, pretty_name: str):
         port = self.mng.get_port_from_id(group_id, port_id)

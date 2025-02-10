@@ -73,12 +73,10 @@ class Metadata:
 
 
 class JackManager:
-    def __init__(self, patchbay_manager: 'PatchancePatchbayManager',
-                 metadata_auto_restore: bool):
+    def __init__(self, patchbay_manager: 'PatchancePatchbayManager'):
         self.jack_running = False
         self.client = None
         self.patchbay_manager = patchbay_manager
-        self.mdata_auto_restore = metadata_auto_restore
 
         self._stopped_sent = False
 
@@ -143,8 +141,7 @@ class JackManager:
             for key in (JackMetadata.CONNECTED,
                         JackMetadata.ORDER,
                         JackMetadata.PORT_GROUP,
-                        JackMetadata.PRETTY_NAME,
-                        JackMetadata.MIDI_BRIDGE_GROUP_PRETTY_NAME):
+                        JackMetadata.PRETTY_NAME):
                 value_type = jack.get_property(port_uuid, key)
                 value = ''
 
@@ -160,14 +157,6 @@ class JackManager:
                     pretty_name = pretty_names.pretty_port(port_name, value)
                     if pretty_name:
                         self.set_metadata(port_uuid, key, pretty_name)
-                        
-                elif key == JackMetadata.MIDI_BRIDGE_GROUP_PRETTY_NAME:
-                    if (port_type == PORT_TYPE_MIDI
-                            and port_name.startswith(('a2j:', 'MidiBridge:'))):
-                        group_name = port_name.partition(':')[2].rpartition(':')[0]
-                        pretty_name = pretty_names.pretty_group(group_name, value)
-                        if pretty_name:
-                            self.set_metadata(port_uuid, key, pretty_name)
 
             if port.is_input:
                 jack_ports.append(
