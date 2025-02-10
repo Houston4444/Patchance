@@ -11,7 +11,7 @@ from qtpy.QtCore import QTimer
 
 import jack
 
-from patshared import JackMetadata
+from patshared import JackMetadata, Naming
 from patchbay.base_elements import TransportPosition
 if TYPE_CHECKING:
     from patchance_pb_manager import PatchancePatchbayManager
@@ -110,6 +110,13 @@ class JackManager:
 
         self.start_jack_client()
     
+    @property
+    def writes_pretty_names(self) -> bool:
+        '''True when this jack client should export internal pretty names
+        to JACK metadatas.'''
+        return bool(self.patchbay_manager.jack_export_naming
+                    & Naming.INTERNAL_PRETTY)
+    
     def init_the_graph(self):
         if not self.jack_running:
             return
@@ -145,7 +152,7 @@ class JackManager:
                     value = value_type[0].decode()
                     metadatas.append(Metadata(port_uuid, key, value))
             
-                if not self.mdata_auto_restore:
+                if not self.writes_pretty_names:
                     continue
 
                 # write pretty_name metadatas on port from config
@@ -202,8 +209,8 @@ class JackManager:
                     self.patchbay_manager.metadata_update(
                         int(client_uuid), key, value)
 
-                if (self.mdata_auto_restore
-                        and key == JackMetadata.PRETTY_NAME):
+                if (key == JackMetadata.PRETTY_NAME
+                        and self.writes_pretty_names):
                     pretty_name = pretty_names.pretty_group(
                         client_name, value)
                     if pretty_name:
@@ -294,9 +301,6 @@ class JackManager:
         if not self.jack_running:
             return
         
-        # if not self.mdata_auto_restore:
-        #     return
-        
         port_names = set[str]()
         client_names = set[str]()
         
@@ -316,7 +320,7 @@ class JackManager:
                 if add: port_names.add(name)
                 else: port_names.discard(name)
         
-        if self.mdata_auto_restore:
+        if self.writes_pretty_names:
             for port_name in port_names:
                 try:
                     port = self.client.get_port_by_name(port_name)
@@ -346,7 +350,7 @@ class JackManager:
             self.patchbay_manager.set_group_uuid_from_name(
                 client_name, int(client_uuid))
             
-            if not self.mdata_auto_restore:
+            if not self.writes_pretty_names:
                 continue
             
             value_type = jack.get_property(
@@ -477,7 +481,7 @@ class JackManager:
                     port_type_int = 2
 
                 self.patchbay_manager.add_port(
-                    port_name, port_type_int, flags, port.uuid)                
+                    port_name, port_type_int, flags, port.uuid)
             else:
                 self.patchbay_manager.remove_port(port_name)
             
@@ -495,7 +499,7 @@ class JackManager:
 
         @self.client.set_port_rename_callback
         def port_rename(port: JackPort, old: str, new: str):
-            if self.mdata_auto_restore:
+            if self.writes_pretty_names:
                 # if the pretty name seems to have been set by this
                 # jack client, we delete the pretty_name metadata
                 # because there are big chances that this name is not well now.
