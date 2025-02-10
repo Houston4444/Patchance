@@ -14,7 +14,7 @@ from patchbay import (
     CanvasOptionsDialog,
     PatchbayManager)
 from patshared import (
-    PortType, PortTypesViewFlag, from_json_to_str)
+    PortType, PortTypesViewFlag, from_json_to_str, Naming)
 
 from tools import get_code_root
 import xdg
@@ -225,6 +225,11 @@ class PatchancePatchbayManager(PatchbayManager):
                 self.alsa_mng.stop_events_loop()
         
         super().set_alsa_midi_enabled(yesno)
+
+    def change_jack_export_naming(self, naming: Naming):
+        self.jack_export_naming = naming
+        if self.jack_mng is not None:
+            self.jack_mng.rewrite_all_pretty_names()
 
     def finish_init(self, main: 'Main'):
         self.jack_mng = main.jack_manager

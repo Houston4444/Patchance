@@ -11,7 +11,7 @@ from qtpy.QtCore import QTimer
 
 import jack
 
-from patshared import JackMetadata, Naming
+from patshared import JackMetadata, Naming, pretty_names
 from patchbay.base_elements import TransportPosition
 from patshared.jack_metadata import JackMetadatas
 if TYPE_CHECKING:
@@ -172,18 +172,15 @@ class JackManager:
             
             self._client_uuids_sent[client_name] = int(client_uuid)
 
-        all_metadatas = dict[int, dict[str, str]]()
+        # send all metadatas to patchbay
         jack_metadatas = JackMetadatas()
-
         for uuid, uuid_dict in jack.get_all_properties().items():
-            all_metadatas[uuid] = dict[str, str]()
-
             for key, value_type in uuid_dict.items():
                 value = value_type[0].decode()
-                all_metadatas[uuid][key] = value
                 jack_metadatas.add(uuid, key, value)
                 self.patchbay_manager.metadata_update(uuid, key, value)
 
+        # write pretty names if option is set
         if self.writes_pretty_names:
             for client_name in client_names:
                 uuid = self._client_uuids_sent.get(client_name)
@@ -575,3 +572,67 @@ class JackManager:
             return
         
         self.client.transport_frame = frame
+        
+    def rewrite_all_pretty_names(self):
+        on_off = self.writes_pretty_names
+        
+        jack_metadatas = JackMetadatas()
+        for uuid, uuid_dict in jack.get_all_properties().items():
+            for key, value_type in uuid_dict.items():
+                value = value_type[0].decode()
+                jack_metadatas.add(uuid, key, value)
+        
+        pretty_names = self.patchbay_manager.pretty_names
+        client_names = set[str]()
+        
+        for port in self.client.get_ports():
+            port_name = port.name
+            port_uuid = port.uuid
+            
+            client_names.add(port_name.partition(':')[0])
+            if not port_uuid:
+                continue
+            
+            mdata_pretty_name = jack_metadatas.pretty_name(port_uuid)
+
+            if on_off:
+                pretty_name = pretty_names.pretty_port(
+                    port_name, mdata_pretty_name)
+                if pretty_name:
+                    self.set_metadata(
+                        port_uuid, JackMetadata.PRETTY_NAME, pretty_name)
+            else:
+                if not mdata_pretty_name:
+                    continue
+                pretty_name = pretty_names.pretty_port(port_name)
+                if pretty_name == mdata_pretty_name:
+                    self.set_metadata(port_uuid, JackMetadata.PRETTY_NAME, '')
+                
+        for client_name in client_names:
+            try:
+                client_uuid = int(
+                    self.client.get_uuid_for_client_name(client_name))
+            except:
+                continue
+            
+            mdata_pretty_name = jack_metadatas.pretty_name(client_uuid)
+            
+            if on_off:
+                pretty_name = pretty_names.pretty_group(
+                    client_name, mdata_pretty_name)
+                if pretty_name:
+                    self.set_metadata(
+                        client_uuid, JackMetadata.PRETTY_NAME, pretty_name)
+            else:
+                if not mdata_pretty_name:
+                    continue
+            
+                pretty_name = pretty_names.pretty_group(client_name)
+                if pretty_name == mdata_pretty_name:
+                    self.set_metadata(
+                        client_uuid, JackMetadata.PRETTY_NAME, '')
+        
+        
+        
+            
+            
