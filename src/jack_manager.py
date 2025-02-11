@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import logging
 from queue import Queue
 
-from qtpy.QtCore import QTimer
+from qtpy.QtCore import QTimer, Slot, Signal, QObject
 
 import jack
 
@@ -73,8 +73,11 @@ class Metadata:
     value: str
 
 
-class JackManager:
+class JackManager(QObject):
+    check_client_uuid_sig = Signal(str, bool)
+    
     def __init__(self, patchbay_manager: 'PatchancePatchbayManager'):
+        QObject.__init__(self)
         self.jack_running = False
         self.client = None
         self.patchbay_manager = patchbay_manager
@@ -106,6 +109,7 @@ class JackManager:
         self._last_transport_pos = None
         
         self._client_uuids_sent = dict[str, int]()
+        self.check_client_uuid_sig.connect(self._check_client_uuid)
 
         self.start_jack_client()
     
@@ -115,6 +119,31 @@ class JackManager:
         to JACK metadatas.'''
         return bool(self.patchbay_manager.jack_export_naming
                     & Naming.INTERNAL_PRETTY)
+    
+    @Slot(str, bool)
+    def _check_client_uuid(self, client_name: str, register: bool):
+        if register:
+            self.inform_patchbay_client_uuid(client_name)
+        else:
+            if client_name in self._client_uuids_sent:
+                self._client_uuids_sent.pop(client_name)
+    
+    def inform_patchbay_client_uuid(self, client_name: str):
+        if not self.jack_running:
+            return
+        
+        if client_name in self._client_uuids_sent:
+            return
+
+        try:
+            client_uuid = int(
+                self.client.get_uuid_for_client_name(client_name))
+        except:
+            return
+        
+        self.patchbay_manager.set_group_uuid_from_name(
+            client_name, client_uuid)
+        self._client_uuids_sent[client_name] = client_uuid        
     
     def init_the_graph(self):
         if not self.jack_running:
@@ -161,22 +190,18 @@ class JackManager:
         
         # associate group names and uuids in patchbay manager
         for client_name in client_names:
-            try:
-                client_uuid = self.client.get_uuid_for_client_name(client_name)
-                assert client_uuid.isdigit()
-            except:
-                continue          
-            
-            self.patchbay_manager.set_group_uuid_from_name(
-                client_name, int(client_uuid))
-            
-            self._client_uuids_sent[client_name] = int(client_uuid)
+            self.inform_patchbay_client_uuid(client_name)
 
         # send all metadatas to patchbay
         jack_metadatas = JackMetadatas()
         for uuid, uuid_dict in jack.get_all_properties().items():
             for key, value_type in uuid_dict.items():
                 value = value_type[0].decode()
+                if len(value) >= 256:
+                    _logger.info(
+                        f'JACK property {key} on {uuid} is too long '
+                        'to be added to the patchbay')
+                    continue
                 jack_metadatas.add(uuid, key, value)
                 self.patchbay_manager.metadata_update(uuid, key, value)
 
@@ -307,37 +332,31 @@ class JackManager:
                 if add: port_names.add(name)
                 else: port_names.discard(name)
         
-        if self.writes_pretty_names:
-            for port_name in port_names:
-                try:
-                    port = self.client.get_port_by_name(port_name)
-                except jack.JackError:
-                    continue
-                
-                value_type = jack.get_property(
-                    port.uuid, JackMetadata.PRETTY_NAME)
-                if value_type is None:
-                    cur_pretty_name = ''
-                else:
-                    cur_pretty_name = value_type[0]
-
-                pretty_name = self.patchbay_manager.pretty_names.pretty_port(
-                    port_name, cur_pretty_name)
-                if pretty_name:
-                    self.set_metadata(
-                        port.uuid, JackMetadata.PRETTY_NAME, pretty_name)
-                
-        for client_name in client_names:
+        if not self.writes_pretty_names:
+            return
+        
+        for port_name in port_names:
             try:
-                client_uuid = self.client.get_uuid_for_client_name(
-                    client_name)
+                port = self.client.get_port_by_name(port_name)
             except jack.JackError:
                 continue
-
-            self.patchbay_manager.set_group_uuid_from_name(
-                client_name, int(client_uuid))
             
-            if not self.writes_pretty_names:
+            value_type = jack.get_property(
+                port.uuid, JackMetadata.PRETTY_NAME)
+            if value_type is None:
+                cur_pretty_name = ''
+            else:
+                cur_pretty_name = value_type[0]
+
+            pretty_name = self.patchbay_manager.pretty_names.pretty_port(
+                port_name, cur_pretty_name)
+            if pretty_name:
+                self.set_metadata(
+                    port.uuid, JackMetadata.PRETTY_NAME, pretty_name)
+                
+        for client_name in client_names:
+            client_uuid = self._client_uuids_sent.get(client_name)
+            if client_uuid is None:
                 continue
             
             value_type = jack.get_property(
@@ -351,7 +370,7 @@ class JackManager:
                 client_name, cur_pretty_name)
             if pretty_name:
                 self.set_metadata(
-                    int(client_uuid), JackMetadata.PRETTY_NAME, pretty_name)
+                    client_uuid, JackMetadata.PRETTY_NAME, pretty_name)
     
     def _check_dsp(self):
         if not self.jack_running:
@@ -452,6 +471,7 @@ class JackManager:
 
         @self.client.set_client_registration_callback
         def client_registration(name: str, register: bool):
+            self.check_client_uuid_sig.emit(name, register)
             self._check_pretty_queue.put_nowait(
                 (True, register, name, time.time()))
 
@@ -500,7 +520,7 @@ class JackManager:
                         self.set_metadata(
                             port.uuid, JackMetadata.PRETTY_NAME, '')
 
-            self.patchbay_manager.rename_port(old, new)
+            self.patchbay_manager.rename_port(old, new, port.uuid)
             self._check_pretty_queue.put_nowait(
                 (False, True, new, time.time()))
 
@@ -527,6 +547,12 @@ class JackManager:
                         value = ''
                     else:
                         value, type_ = value_type
+                        if len(value) >= 256:
+                            _logger.info(
+                                f'JACK property {key} on {subject}, '
+                                'too long value to be added to canvas, '
+                                'probably not a string.')
+                            return
                         value = value.decode()
                 
                 self.patchbay_manager.metadata_update(
