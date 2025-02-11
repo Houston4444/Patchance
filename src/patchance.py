@@ -4,31 +4,49 @@ APP_TITLE = 'Patchance'
 VERSION = (1, 2, 0)
 
 import sys
+from pathlib import Path
+from typing import Optional
 
 # manage arguments now
 # Yes, that is not conventional to do this kind of code during imports
 # but it allows faster answer for --version and --help argument.
+reading_cfg_dir = False
+config_dir: Optional[Path] = None
+
 for arg in sys.argv[1:]:
-    if arg == '--version':
+    if arg in ('--config-dir', '-c'):
+        reading_cfg_dir = True
+    
+    elif arg == '--version':
         sys.stdout.write('.'.join([str(i) for i in VERSION]) + '\n')
         sys.exit(0)
-    if arg == '--help':
+
+    elif arg == '--help':
         info = (
             "Patchbay application for JACK\n"
             "Usage: patchance [--help] [--version]\n"
+            "  --config-dir CONFIG_DIR, -c CONFIG_DIR"
+            "             use a custom config directory"
             "  --help     show this help\n"
             "  --version  print program version\n"
         )
         sys.stdout.write(info)
         sys.exit(0)
-
+        
+    elif reading_cfg_dir:
+        config_dir = Path(arg).expanduser()
+        try:
+            config_dir.mkdir(parents=True, exist_ok=True)
+        except BaseException as e:
+            sys.stderr.write(
+                f'Impossible to create config dir {config_dir}\n'
+                f'{str(e)}\n')
+            sys.exit(1)
 
 import os
-from typing import Optional
 import signal
 import logging
 from dataclasses import dataclass
-from pathlib import Path
 
 # add HoustonPatchbay as lib
 sys.path.insert(1, str(Path(__file__).parents[1] / 'HoustonPatchbay/source'))
@@ -125,7 +143,13 @@ def main_loop():
     timer.start(200)
     timer.timeout.connect(lambda: None)
 
-    settings = QSettings()
+    if config_dir is not None:
+        settings = QSettings(
+            str(config_dir / f'{APP_TITLE}.conf'),
+            QSettings.Format.IniFormat)
+    else:
+        settings = QSettings()
+
     main_win = MainWindow()
     pb_manager = PatchancePatchbayManager(settings)
     jack_manager = JackManager(pb_manager)
