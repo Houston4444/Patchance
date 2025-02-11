@@ -1,7 +1,7 @@
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import Qt
+from qtpy.QtCore import Qt, Slot
 from qtpy.QtGui import QResizeEvent, QKeyEvent
 from qtpy.QtWidgets import (
     QMainWindow, QShortcut, QMenu, QApplication, QToolButton)
@@ -30,14 +30,17 @@ class MainWindow(QMainWindow):
         self.main_menu.addAction(self.ui.actionShowMenuBar)
         self.main_menu.addAction(self.ui.actionQuit)
         
-        self.menu_button: QToolButton = self.ui.toolBar.widgetForAction(
+        self.menu_button = self.ui.toolBar.widgetForAction(
             self.ui.actionMainMenu)
-        self.menu_button.setPopupMode(QToolButton.InstantPopup)
-        self.menu_button.setMenu(self.main_menu)
+        if isinstance(self.menu_button, QToolButton):
+            # must be True, condition for typing
+            self.menu_button.setPopupMode(
+                QToolButton.ToolButtonPopupMode.InstantPopup)
+            self.menu_button.setMenu(self.main_menu)
         
         self.ui.filterFrame.setVisible(False)
         self.ui.actionShowMenuBar.toggled.connect(self._menubar_shown_toggled)
-        self.ui.actionQuit.triggered.connect(QApplication.quit)
+        self.ui.actionQuit.triggered.connect(self.quit_app)
         self.ui.actionAboutPatchance.triggered.connect(
             self._show_about_dialog)
         self.ui.actionAboutQt.triggered.connect(QApplication.aboutQt)
@@ -153,13 +156,21 @@ class MainWindow(QMainWindow):
     def toggle_filter_frame_visibility(self):
         self.ui.filterFrame.setVisible(
             not self.ui.filterFrame.isVisible())
-        
-    def closeEvent(self, event):
+    
+    def save_settings(self):
         self.settings.setValue('MainWindow/geometry', self.saveGeometry())
         self.settings.setValue(
             'tool_bar/elements',
             self.patchbay_tools._tools_displayed.to_save_string())
         self.patchbay_manager.save_settings()
+    
+    @Slot()
+    def quit_app(self):
+        self.save_settings()
+        QApplication.quit()
+    
+    def closeEvent(self, event):
+        self.save_settings()
         super().closeEvent(event)
         
     def resizeEvent(self, event: QResizeEvent):
