@@ -1,13 +1,13 @@
 #!/usr/bin/env -S python3 -u
 
 APP_TITLE = 'Patchance'
-VERSION = (1, 1, 0)
+VERSION = (1, 2, 0)
 
 import sys
 
 # manage arguments now
 # Yes, that is not conventional to do this kind of code during imports
-# but it allows faster answer for --version argument.
+# but it allows faster answer for --version and --help argument.
 for arg in sys.argv[1:]:
     if arg == '--version':
         sys.stdout.write('.'.join([str(i) for i in VERSION]) + '\n')
