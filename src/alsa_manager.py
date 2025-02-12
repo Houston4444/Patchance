@@ -24,7 +24,7 @@ from pyalsa.alsaseq import (
     SequencerError
 )
 from patshared import PortType
-from patchbay.base_elements import JackPortFlag
+from patchbay.bases.elements import JackPortFlag
 
 if TYPE_CHECKING:
     from patchbay.patchbay_manager import PatchbayManager

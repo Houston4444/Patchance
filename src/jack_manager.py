@@ -12,7 +12,7 @@ from qtpy.QtCore import QTimer, Slot, Signal, QObject
 import jack
 
 from patshared import JackMetadata, Naming, pretty_names
-from patchbay.base_elements import TransportPosition
+from patchbay.bases.elements import TransportPosition
 from patshared.jack_metadata import JackMetadatas
 if TYPE_CHECKING:
     from patchance_pb_manager import PatchancePatchbayManager

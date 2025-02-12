@@ -8,7 +8,7 @@ from qtpy.QtWidgets import (
 
 from about_dialog import AboutDialog
 from patchbay.tools_widgets import PatchbayToolsWidget, TextWithIcons
-from patchbay.base_elements import ToolDisplayed
+from patchbay.bases.elements import ToolDisplayed
 
 from ui.main_win import Ui_MainWindow
 

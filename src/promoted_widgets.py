@@ -1,5 +1,5 @@
 from patchbay import FilterFrame, PatchGraphicsView
-from patchbay.tool_bar import PatchbayToolBar
+from patchbay.widgets.tool_bar import PatchbayToolBar
 
 
 class PatchFilterFrame(FilterFrame):
