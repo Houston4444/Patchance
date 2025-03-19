@@ -75,10 +75,12 @@ class Metadata:
 
 class JackManager(QObject):
     check_client_uuid_sig = Signal(str, bool)
+    start_timers = Signal()
     
     def __init__(self, patchbay_manager: 'PatchancePatchbayManager'):
         QObject.__init__(self)
         self.jack_running = False
+        self._waiting_jack_client_open = False
         self.client = None
         self.patchbay_manager = patchbay_manager
 
@@ -110,6 +112,7 @@ class JackManager(QObject):
         
         self._client_uuids_sent = dict[str, int]()
         self.check_client_uuid_sig.connect(self._check_client_uuid)
+        self.start_timers.connect(self._start_timers)
 
         self.start_jack_client()
     
@@ -127,6 +130,12 @@ class JackManager(QObject):
         else:
             if client_name in self._client_uuids_sent:
                 self._client_uuids_sent.pop(client_name)
+    
+    @Slot()
+    def _start_timers(self):
+        self._dsp_timer.start()
+        self._transport_timer.start()
+        self._check_pretty_timer.start()
     
     def inform_patchbay_client_uuid(self, client_name: str):
         if not self.jack_running:
@@ -239,8 +248,8 @@ class JackManager(QObject):
             self.client.blocksize)
     
     def check_jack_client_responding(self):
-        for i in range(100): # JACK has 5s to answer
-            time.sleep(0.050)
+        for i in range(1000): # JACK has 5s to answer
+            time.sleep(0.05)
 
             if not self._waiting_jack_client_open:
                 break
@@ -254,7 +263,16 @@ class JackManager(QObject):
     def start_jack_client(self):
         if self.jack_running:
             return
+
+        if self._waiting_jack_client_open:
+            return
+
+        th = threading.Thread(target=self.other_thread_start_client)
+        th.start()
         
+        self._jack_checker_timer.start()
+        
+    def other_thread_start_client(self):        
         self._waiting_jack_client_open = True
         
         # Sometimes JACK never registers the client
@@ -294,15 +312,11 @@ class JackManager(QObject):
             self.samplerate = self.client.samplerate
             self.buffer_size = self.client.blocksize
             self.patchbay_manager.server_started()
-            self._dsp_timer.start()
-            self._transport_timer.start()
-            self._check_pretty_timer.start()
+            self.start_timers.emit()
         else:
             if not self._stopped_sent:
                 self.patchbay_manager.server_stopped()
                 self._stopped_sent = True
-
-        self._jack_checker_timer.start()
     
     def _check_pretty_names(self):
         '''Add pretty_name metadatas on newly added clients and ports.
