@@ -147,6 +147,7 @@ def main_loop():
     engine = PatchEngine(
         'Patchance', Path('/tmp/Patchance/pretty_names.json'))
     pb_manager = PatchancePatchbayManager(engine, settings)
+    engine.pretty_names = pb_manager.pretty_names
 
     main = Main(app,
                 main_win,
@@ -165,6 +166,7 @@ def main_loop():
     main_win.show()
 
     engine.start(PtcPatchEngineOuter(pb_manager))
+    engine.apply_pretty_names_export()
     patch_timer.start(50)
 
     app.exec()
