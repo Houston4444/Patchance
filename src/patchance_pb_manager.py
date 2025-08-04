@@ -6,7 +6,8 @@ from typing import TYPE_CHECKING, Union
 
 from qtpy.QtCore import QSettings
 from qtpy.QtWidgets import QApplication
-from patshared import JackMetadata
+from patch_engine.patch_engine import PatchEngine
+from patchbay.bases.elements import CanvasOptimizeIt
 
 from patchbay import (
     CanvasMenu,
@@ -35,28 +36,33 @@ class PatchanceCallbacker(Callbacker):
         if TYPE_CHECKING:
             self.mng = manager
     
-    def _group_rename(self, group_id: int, pretty_name: str):
+    def _group_rename(
+            self, group_id: int, pretty_name: str, save_in_jack: bool):
+        if not save_in_jack:
+            return
+
         group = self.mng.get_group_from_id(group_id)
         if group is None:
             return
 
-        if self.mng.jack_mng is None:
-            return
         
         if not group.uuid:
             return
-    
-        self.mng.jack_mng.set_metadata(
-            group.uuid, JackMetadata.PRETTY_NAME, pretty_name)
+        
+        self.mng.pe.write_group_pretty_name(group.name, pretty_name)
 
-    def _port_rename(self, group_id: int, port_id: int, pretty_name: str):
+    def _port_rename(
+            self, group_id: int, port_id: int,
+            pretty_name: str, save_in_jack: bool):
+        if not save_in_jack:
+            return
+
         port = self.mng.get_port_from_id(group_id, port_id)
         if port is None:
             return
 
-        if port.type in (PortType.AUDIO_JACK, PortType.MIDI_JACK):
-            self.mng.jack_mng.set_metadata(
-                port.uuid, JackMetadata.PRETTY_NAME, pretty_name)
+        if port.type.is_jack:
+            self.mng.pe.write_port_pretty_name(port.full_name, pretty_name)
 
     def _ports_connect(self, group_out_id: int, port_out_id: int,
                        group_in_id: int, port_in_id: int):
@@ -65,43 +71,27 @@ class PatchanceCallbacker(Callbacker):
         if port_out is None or port_in is None:
             return
         
-        if port_out.type is PortType.MIDI_ALSA:
-            if self.mng.alsa_mng is None:
-                return
+        self.mng.pe.connect_ports(port_out.full_name, port_in.full_name)        
         
-            self.mng.alsa_mng.connect_ports(
-                port_out.full_name, port_in.full_name)
-        if self.mng.jack_mng is None:
-            return
         
-        self.mng.jack_mng.connect_ports(
-            port_out.full_name, port_in.full_name)
 
     def _ports_disconnect(self, connection_id: int):
         for conn in self.mng.connections:
             if conn.connection_id == connection_id:
-                if conn.port_type is PortType.MIDI_ALSA:
-                    if self.mng.alsa_mng is None:
-                        return
-                    
-                    self.mng.alsa_mng.connect_ports(
-                        conn.port_out.full_name,
-                        conn.port_in.full_name,
-                        disconnect=True)
-                    return
-
-                self.mng.jack_mng.disconnect_ports(
-                    conn.port_out.full_name, conn.port_in.full_name)
+                self.mng.pe.connect_ports(
+                    conn.port_out.full_name,
+                    conn.port_in.full_name,
+                    disconnect=True)
                 return
 
 
 class PatchancePatchbayManager(PatchbayManager):
-    def __init__(self, settings: Union[QSettings, None] =None):
+    def __init__(self, engine: PatchEngine,
+                 settings: Union[QSettings, None] =None):
         super().__init__(settings)
+        self.pe = engine
         self._settings = settings
         
-        self.jack_mng = None
-        self.alsa_mng = None
         self._memory_path = None
 
         self._load_memory_file()
@@ -195,45 +185,50 @@ class PatchancePatchbayManager(PatchbayManager):
 
     def refresh(self):
         super().refresh()
-        if self.jack_mng is not None:
-            self.jack_mng.init_the_graph()
+        self.pe.refresh()
         
-        if self.alsa_mng is not None:
-            self.alsa_mng.add_all_ports()
     
     def change_buffersize(self, buffer_size: int):
         super().change_buffersize(buffer_size)
-        self.jack_mng.set_buffer_size(buffer_size)
+        self.pe.set_buffer_size(buffer_size)
     
     def transport_play_pause(self, play: bool):
-        if play:
-            self.jack_mng.transport_start()
-        else:
-            self.jack_mng.transport_pause()
+        self.pe.transport_play(play)
         
     def transport_stop(self):
-        self.jack_mng.transport_stop()
+        self.pe.transport_stop()
 
     def transport_relocate(self, frame: int):
-        self.jack_mng.transport_relocate(frame)
+        self.pe.transport_relocate(frame)
 
     def set_alsa_midi_enabled(self, yesno: int):
-        if self.alsa_mng is not None:    
-            if yesno:
-                self.alsa_mng.add_all_ports()
-            else:
-                self.alsa_mng.stop_events_loop()
         
         super().set_alsa_midi_enabled(yesno)
 
     def change_jack_export_naming(self, naming: Naming):
         self.jack_export_naming = naming
-        if self.jack_mng is not None:
-            self.jack_mng.rewrite_all_pretty_names()
+        auto_export = Naming.INTERNAL_PRETTY in naming
+        self.pe.set_pretty_names_auto_export(auto_export)
+
+    def server_restarted(self):
+        self.sample_rate_changed(self.pe.samplerate)
+        self.buffer_size_changed(self.pe.buffer_size)
+        
+        with CanvasOptimizeIt(self):
+            for port in self.pe.ports:
+                self.add_port(port.name, port.type, port.flags, port.uuid)
+            
+            for client_name, client_uuid in self.pe.client_name_uuids.items():
+                self.set_group_uuid_from_name(client_name, client_uuid)
+            
+            for connection in self.pe.connections:
+                self.add_connection(*connection)
+            
+            for uuid, key_dict in self.pe.metadatas.items():
+                for key, value in key_dict.items():
+                    self.metadata_update(uuid, key, value)
 
     def finish_init(self, main: 'Main'):
-        self.jack_mng = main.jack_manager
-        self.alsa_mng = main.alsa_manager
         self.set_main_win(main.main_win)
         self._setup_canvas()
 
@@ -241,12 +236,6 @@ class PatchancePatchbayManager(PatchbayManager):
         self.set_tools_widget(main.main_win.patchbay_tools)
         self.set_filter_frame(main.main_win.ui.filterFrame)
         
-        if self.jack_mng.jack_running:
-            self.server_started()
-            self.sample_rate_changed(self.jack_mng.get_sample_rate())
-            self.buffer_size_changed(self.jack_mng.get_buffer_size())
-        else:
-            self.server_stopped()
 
         self.set_options_dialog(
             CanvasOptionsDialog(self.main_win, self))

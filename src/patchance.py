@@ -25,8 +25,8 @@ for arg in sys.argv[1:]:
         info = (
             "Patchbay application for JACK\n"
             "Usage: patchance [--help] [--version]\n"
-            "  --config-dir CONFIG_DIR, -c CONFIG_DIR"
-            "             use a custom config directory"
+            "  --config-dir CONFIG_DIR, -c CONFIG_DIR\n"
+            "             use a custom config directory\n"
             "  --help     show this help\n"
             "  --version  print program version\n"
         )
@@ -58,21 +58,14 @@ os.environ['QT_API'] = QT_API
 
 from qtpy.QtWidgets import QApplication
 from qtpy.QtGui import QIcon, QFontDatabase
-from qtpy.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings
+from qtpy.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings, QObject
 
-try:
-    from pyalsa.alsaseq import SEQ_LIB_VERSION_STR
-    ALSA_VERSION_LIST = [int(num) for num in SEQ_LIB_VERSION_STR.split('.')]
-    assert ALSA_VERSION_LIST >= [1, 2, 4]
-    ALSA_LIB_OK = True
-except:
-    ALSA_LIB_OK = False
+from patch_engine import PatchEngine, ALSA_LIB_OK
 
+from engine_loop import PatchTimeoutObj
 from main_win import MainWindow
 from patchance_pb_manager import PatchancePatchbayManager
-from jack_manager import JackManager
-if ALSA_LIB_OK:
-    from alsa_manager import AlsaManager
+from ptc_patch_engine_outer import PtcPatchEngineOuter
 
 
 @dataclass
@@ -80,11 +73,11 @@ class Main:
     app: QApplication
     main_win: MainWindow
     patchbay_manager: PatchancePatchbayManager
-    jack_manager: JackManager
-    alsa_manager: 'Optional[AlsaManager]'
     settings: QSettings
 
 
+
+        
 def signal_handler(sig, frame):
     if sig in (signal.SIGINT, signal.SIGTERM):
         QApplication.quit()
@@ -151,36 +144,35 @@ def main_loop():
         settings = QSettings()
 
     main_win = MainWindow()
-    pb_manager = PatchancePatchbayManager(settings)
-    jack_manager = JackManager(pb_manager)
-    
-    if ALSA_LIB_OK:
-        alsa_manager = AlsaManager(pb_manager)
-        if settings.value('Canvas/alsa_midi_enabled', False, type=bool):
-            alsa_manager.add_all_ports()
-    else:
-        alsa_manager = None
+    engine = PatchEngine(
+        'Patchance', Path('/tmp/Patchance/pretty_names.json'))
+    pb_manager = PatchancePatchbayManager(engine, settings)
 
     main = Main(app,
                 main_win,
                 pb_manager,
-                jack_manager,
-                alsa_manager,
                 settings)
 
     pb_manager.finish_init(main)
     if not ALSA_LIB_OK:
         pb_manager.options_dialog.enable_alsa_midi(False)
     
+    timeout_obj = PatchTimeoutObj(engine)
+    patch_timer = QTimer()
+    patch_timer.timeout.connect(timeout_obj.check_patch)
+    
     main_win.finish_init(main)
     main_win.show()
 
+    engine.start(PtcPatchEngineOuter(pb_manager))
+    patch_timer.start(50)
+
     app.exec()
     settings.sync()
-    if alsa_manager is not None:
-        alsa_manager.stop_events_loop()
-    jack_manager.exit()
     pb_manager.save_positions()
+    
+    patch_timer.stop()
+    engine.exit()
     del app
 
 

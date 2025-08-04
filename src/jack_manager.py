@@ -11,7 +11,7 @@ from qtpy.QtCore import QTimer, Slot, Signal, QObject
 
 import jack
 
-from patshared import JackMetadata, Naming, pretty_names
+from patshared import JackMetadata, Naming
 from patchbay.bases.elements import TransportPosition
 from patshared.jack_metadata import JackMetadatas
 if TYPE_CHECKING:
@@ -24,6 +24,9 @@ _logger = logging.getLogger()
 PORT_TYPE_NULL = 0
 PORT_TYPE_AUDIO = 1
 PORT_TYPE_MIDI = 2
+
+JACK_CLIENT_NAME = 'patchance'
+METADATA_LOCKER = 'pretty-name-export.locker'
 
 
 # Define a context manager to suppress stdout and stderr.
@@ -83,6 +86,7 @@ class JackManager(QObject):
         self._waiting_jack_client_open = False
         self.client = None
         self.patchbay_manager = patchbay_manager
+        self._locker_written = False
 
         self._stopped_sent = False
 
@@ -117,11 +121,36 @@ class JackManager(QObject):
         self.start_jack_client()
     
     @property
-    def writes_pretty_names(self) -> bool:
+    def auto_export_pretty_names(self) -> bool:
         '''True when this jack client should export internal pretty names
         to JACK metadatas.'''
         return bool(self.patchbay_manager.jack_export_naming
                     & Naming.INTERNAL_PRETTY)
+    
+    def write_locker_mdata(self):
+        '''set locker identifier.
+        Multiple daemons can co-exist,
+        But if we want things going right,
+        we have to ensure that each daemon runs on a different JACK server'''
+        try:
+            self.client.set_property(
+                self.client.uuid, METADATA_LOCKER, '1')
+        except:
+            _logger.warning(
+                f'Failed to set locker metadata for {JACK_CLIENT_NAME}, '
+                'could cause troubles if you start multiple daemons.')
+        else:
+            self._locker_written = True
+    
+    def remove_locker_mdata(self):
+        if self._locker_written:
+            try:
+                self.client.remove_property(
+                    self.client.uuid, METADATA_LOCKER)
+            except:
+                _logger.warning(
+                    f'Failed to remove locker metadata for {JACK_CLIENT_NAME}')
+        self._locker_written = False
     
     @Slot(str, bool)
     def _check_client_uuid(self, client_name: str, register: bool):
@@ -215,7 +244,7 @@ class JackManager(QObject):
                 self.patchbay_manager.metadata_update(uuid, key, value)
 
         # write pretty names if option is set
-        if self.writes_pretty_names:
+        if self.auto_export_pretty_names:
             for client_name in client_names:
                 uuid = self._client_uuids_sent.get(client_name)
                 if uuid is None:
@@ -346,7 +375,7 @@ class JackManager(QObject):
                 if add: port_names.add(name)
                 else: port_names.discard(name)
         
-        if not self.writes_pretty_names:
+        if not self.auto_export_pretty_names:
             return
         
         for port_name in port_names:
@@ -520,7 +549,7 @@ class JackManager(QObject):
 
         @self.client.set_port_rename_callback
         def port_rename(port: JackPort, old: str, new: str):
-            if self.writes_pretty_names:
+            if self.auto_export_pretty_names:
                 # if the pretty name seems to have been set by this
                 # jack client, we delete the pretty_name metadata
                 # because there are big chances that this name is not well now.
@@ -571,6 +600,14 @@ class JackManager(QObject):
                 
                 self.patchbay_manager.metadata_update(
                     subject, key, value)
+                
+                if key == METADATA_LOCKER:
+                    if subject == self._client_uuid:
+                        if not value and self.auto_export_pretty_names:
+                            # if the metadata locker has been removed
+                            # from an external client,
+                            # re-set it immediatly.
+                            self.write_locker_mdata()
 
         except jack.JackError as e:
             _logger.warning(
@@ -614,7 +651,7 @@ class JackManager(QObject):
         self.client.transport_frame = frame
         
     def rewrite_all_pretty_names(self):
-        on_off = self.writes_pretty_names
+        on_off = self.auto_export_pretty_names
         
         jack_metadatas = JackMetadatas()
         for uuid, uuid_dict in jack.get_all_properties().items():
