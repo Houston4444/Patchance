@@ -204,6 +204,19 @@ class PatchancePatchbayManager(PatchbayManager):
         
         super().set_alsa_midi_enabled(yesno)
 
+    def export_custom_names_to_jack(self):
+        self.pe.export_all_custom_names_to_jack_now()
+
+    def import_pretty_names_from_jack(self):
+        clients_dict, ports_dict = \
+            self.pe.import_all_pretty_names_from_jack()
+        
+        for client_name, pretty_name in clients_dict.items():
+            self.custom_names.save_group(client_name, pretty_name)
+        
+        for port_name, pretty_name in ports_dict.items():
+            self.custom_names.save_port(port_name, pretty_name)
+
     def change_jack_export_naming(self, naming: Naming):
         self._settings.setValue('Canvas/jack_export_naming', naming.name)
         self.jack_export_naming = naming
