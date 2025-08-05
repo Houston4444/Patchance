@@ -216,6 +216,7 @@ class PatchancePatchbayManager(PatchbayManager):
         
         for port_name, pretty_name in ports_dict.items():
             self.custom_names.save_port(port_name, pretty_name)
+        self.pretty_diff_checker.full_update()
 
     def change_jack_export_naming(self, naming: Naming):
         self._settings.setValue('Canvas/jack_export_naming', naming.name)
