@@ -37,7 +37,7 @@ class PatchanceCallbacker(Callbacker):
             self.mng = manager
     
     def _group_rename(
-            self, group_id: int, pretty_name: str, save_in_jack: bool):
+            self, group_id: int, custom_name: str, save_in_jack: bool):
         if not save_in_jack:
             return
 
@@ -49,11 +49,11 @@ class PatchanceCallbacker(Callbacker):
         if not group.uuid:
             return
         
-        self.mng.pe.write_group_pretty_name(group.name, pretty_name)
+        self.mng.pe.write_group_pretty_name(group.name, custom_name)
 
     def _port_rename(
             self, group_id: int, port_id: int,
-            pretty_name: str, save_in_jack: bool):
+            custom_name: str, save_in_jack: bool):
         if not save_in_jack:
             return
 
@@ -62,7 +62,7 @@ class PatchanceCallbacker(Callbacker):
             return
 
         if port.type.is_jack:
-            self.mng.pe.write_port_pretty_name(port.full_name, pretty_name)
+            self.mng.pe.write_port_pretty_name(port.full_name, custom_name)
 
     def _ports_connect(self, group_out_id: int, port_out_id: int,
                        group_in_id: int, port_in_id: int):
@@ -149,7 +149,7 @@ class PatchancePatchbayManager(PatchbayManager):
         self.view_number = self.views.first_view_num()
 
         self.portgroups_memory.eat_json(json_dict.get('portgroups'))
-        self.pretty_names.eat_json(json_dict.get('pretty_names'))
+        self.custom_names.eat_json(json_dict.get('custom_names'))
 
         self.sg.views_changed.emit()
         self.change_port_types_view(
@@ -186,8 +186,7 @@ class PatchancePatchbayManager(PatchbayManager):
     def refresh(self):
         super().refresh()
         self.pe.refresh()
-        
-    
+
     def change_buffersize(self, buffer_size: int):
         super().change_buffersize(buffer_size)
         self.pe.set_buffer_size(buffer_size)
@@ -206,8 +205,9 @@ class PatchancePatchbayManager(PatchbayManager):
         super().set_alsa_midi_enabled(yesno)
 
     def change_jack_export_naming(self, naming: Naming):
+        self._settings.setValue('Canvas/jack_export_naming', naming.name)
         self.jack_export_naming = naming
-        auto_export = Naming.INTERNAL_PRETTY in naming
+        auto_export = Naming.CUSTOM in naming
         self.pe.set_pretty_names_auto_export(auto_export)
 
     def server_restarted(self):
@@ -241,11 +241,11 @@ class PatchancePatchbayManager(PatchbayManager):
             CanvasOptionsDialog(self.main_win, self))
 
     def save_positions(self):
-        '''Save patchbay boxes positions and pretty names'''
+        '''Save patchbay boxes positions and custom names'''
         json_str = from_json_to_str(
             {'views': self.views.to_json_list(),
              'portgroups': self.portgroups_memory.to_json(),
-             'pretty_names': self.pretty_names.to_json()})
+             'custom_names': self.custom_names.to_json()})
 
         if self._memory_path is not None:
             try:

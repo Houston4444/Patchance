@@ -60,6 +60,7 @@ from qtpy.QtWidgets import QApplication
 from qtpy.QtGui import QIcon, QFontDatabase
 from qtpy.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings, QObject
 
+from patshared import Naming
 from patch_engine import PatchEngine, ALSA_LIB_OK
 
 from engine_loop import PatchTimeoutObj
@@ -144,10 +145,16 @@ def main_loop():
         settings = QSettings()
 
     main_win = MainWindow()
+    
+    export_naming = Naming.from_config_str(
+        settings.value(
+            'Canvas/jack_export_naming', 'TRUE_NAME', type=str))        
     engine = PatchEngine(
-        'Patchance', Path('/tmp/Patchance/pretty_names.json'))
+        'Patchance', Path('/tmp/Patchance/pretty_names.json'),
+        Naming.CUSTOM in export_naming)
     pb_manager = PatchancePatchbayManager(engine, settings)
-    engine.pretty_names = pb_manager.pretty_names
+    pb_manager.jack_export_naming = export_naming
+    engine.custom_names = pb_manager.custom_names
 
     main = Main(app,
                 main_win,
