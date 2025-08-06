@@ -14,34 +14,52 @@ reading_cfg_dir = False
 config_dir: Optional[Path] = None
 
 for arg in sys.argv[1:]:
-    if arg in ('--config-dir', '-c'):
-        reading_cfg_dir = True
-    
-    elif arg == '--version':
-        sys.stdout.write('.'.join([str(i) for i in VERSION]) + '\n')
-        sys.exit(0)
-
-    elif arg == '--help':
-        info = (
-            "Patchbay application for JACK\n"
-            "Usage: patchance [--help] [--version]\n"
-            "  --config-dir CONFIG_DIR, -c CONFIG_DIR\n"
-            "             use a custom config directory\n"
-            "  --help     show this help\n"
-            "  --version  print program version\n"
-        )
-        sys.stdout.write(info)
-        sys.exit(0)
+    match arg:
         
-    elif reading_cfg_dir:
-        config_dir = Path(arg).expanduser()
-        try:
-            config_dir.mkdir(parents=True, exist_ok=True)
-        except BaseException as e:
-            sys.stderr.write(
-                f'Impossible to create config dir {config_dir}\n'
-                f'{str(e)}\n')
-            sys.exit(1)
+        case '--config-dir'|'-c':
+            reading_cfg_dir = True
+        
+        case '--export-custom-names'|'-c2p'\
+                |'--import-pretty-names'|'-p2c'\
+                |'--clear-pretty-names':
+            if config_dir is None:
+                import xdg
+                config_dir = xdg.xdg_config_home() / APP_TITLE
+
+            import one_shot_pretty_act
+            one_shot_pretty_act.make_one_shot_act(arg, config_dir)
+        
+        case '--version':
+            sys.stdout.write('.'.join([str(i) for i in VERSION]) + '\n')
+            sys.exit(0)
+
+        case '--help':
+            info = (
+                "Patchbay application for JACK\n"
+                "Usage: patchance [--help] [--version]\n"
+                "  --config-dir CONFIG_DIR, -c CONFIG_DIR\n"
+                "             use a custom config directory\n"
+                "  --export-custom-names, -c2p\n"
+                "             export custom names from config to JACK pretty-names and exit\n"
+                "  --import-pretty-names, -p2c\n"
+                "             import JACK pretty-names to custom names, save config and exit\n"
+                "  --clear-pretty-names\n"
+                "             delete all JACK pretty-name metadatas and exit\n"
+                "  --help     show this help\n"
+                "  --version  print program version\n"
+            )
+            sys.stdout.write(info)
+            sys.exit(0)
+            
+        case _ if reading_cfg_dir:
+            config_dir = Path(arg).expanduser()
+            try:
+                config_dir.mkdir(parents=True, exist_ok=True)
+            except BaseException as e:
+                sys.stderr.write(
+                    f'Impossible to create config dir {config_dir}\n'
+                    f'{str(e)}\n')
+                sys.exit(1)
 
 import os
 import signal
@@ -60,7 +78,7 @@ from qtpy.QtWidgets import QApplication
 from qtpy.QtGui import QIcon, QFontDatabase
 from qtpy.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings, QObject
 
-from patshared import Naming
+from patshared import Naming, custom_names
 from patch_engine import PatchEngine, ALSA_LIB_OK
 
 from engine_loop import PatchTimeoutObj
