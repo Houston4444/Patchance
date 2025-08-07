@@ -3,71 +3,120 @@
 APP_TITLE = 'Patchance'
 VERSION = (1, 2, 0)
 
+from enum import Enum, auto
 import sys
 from pathlib import Path
 from typing import Optional
+import logging
 
 # manage arguments now
 # Yes, that is not conventional to do this kind of code during imports
 # but it allows faster answer for --version and --help argument.
-reading_cfg_dir = False
+
+class ReadArg(Enum):
+    NONE = auto()
+    CONFIG_DIR = auto()
+    DBG = auto()
+    INFO = auto()
+
+
+read_arg = ReadArg.NONE
 config_dir: Optional[Path] = None
+debug_str = ''
+info_str = ''
+one_shot_act = ''
 
 for arg in sys.argv[1:]:
     match arg:
-        
         case '--config-dir'|'-c':
-            reading_cfg_dir = True
+            read_arg = ReadArg.CONFIG_DIR
         
         case '--export-custom-names'|'-c2p'\
                 |'--import-pretty-names'|'-p2c'\
                 |'--clear-pretty-names':
-            if config_dir is None:
-                import xdg
-                config_dir = xdg.xdg_config_home() / APP_TITLE
+            one_shot_act = arg
+            # if config_dir is None:
+            #     import xdg
+            #     config_dir = xdg.xdg_config_home() / APP_TITLE
 
-            import one_shot_pretty_act
-            one_shot_pretty_act.make_one_shot_act(arg, config_dir)
+            # import one_shot_pretty_act
+            # one_shot_pretty_act.make_one_shot_act(arg, config_dir)
+        
+        case '-dbg'|'--dbg':
+            read_arg = ReadArg.DBG
+            
+        case '-info'|'--info':
+            read_arg = ReadArg.INFO
         
         case '--version':
             sys.stdout.write('.'.join([str(i) for i in VERSION]) + '\n')
             sys.exit(0)
 
         case '--help':
-            info = (
-                "Patchbay application for JACK\n"
-                "Usage: patchance [--help] [--version]\n"
-                "  --config-dir CONFIG_DIR, -c CONFIG_DIR\n"
-                "             use a custom config directory\n"
-                "  --export-custom-names, -c2p\n"
-                "             export custom names from config to JACK pretty-names and exit\n"
-                "  --import-pretty-names, -p2c\n"
-                "             import JACK pretty-names to custom names, save config and exit\n"
-                "  --clear-pretty-names\n"
-                "             delete all JACK pretty-name metadatas and exit\n"
-                "  --help     show this help\n"
-                "  --version  print program version\n"
-            )
-            sys.stdout.write(info)
+            from help import HELP
+            sys.stdout.write(HELP)
             sys.exit(0)
             
-        case _ if reading_cfg_dir:
-            config_dir = Path(arg).expanduser()
-            try:
-                config_dir.mkdir(parents=True, exist_ok=True)
-            except BaseException as e:
-                sys.stderr.write(
-                    f'Impossible to create config dir {config_dir}\n'
-                    f'{str(e)}\n')
-                sys.exit(1)
+        case _:
+            match read_arg:
+                case ReadArg.CONFIG_DIR:
+                    config_dir = Path(arg).expanduser()
+                    try:
+                        config_dir.mkdir(parents=True, exist_ok=True)
+                    except BaseException as e:
+                        sys.stderr.write(
+                            f'Impossible to create config dir {config_dir}\n'
+                            f'{str(e)}\n')
+                        sys.exit(1)
+                
+                case ReadArg.DBG:
+                    debug_str = arg
+                    
+                case ReadArg.INFO:
+                    info_str = arg
+                
+                case _:
+                    sys.stderr.write(f'Unknown argument {arg}\n')
+                    from help import HELP
+                    sys.stderr.write(HELP)
+                    sys.exit(1)
+            
+            read_arg = ReadArg.NONE
 
+
+
+import logging
 import os
 import signal
-import logging
 from dataclasses import dataclass
 
 # add HoustonPatchbay as lib
 sys.path.insert(1, str(Path(__file__).parents[1] / 'HoustonPatchbay/source'))
+
+_logger = logging.getLogger()
+_log_handler = logging.StreamHandler()
+_log_handler.setFormatter(logging.Formatter(
+    f"%(levelname)s:%(name)s - %(message)s"))
+_logger.addHandler(_log_handler)
+
+if info_str:
+    for module_name in info_str.split(':'):
+        _mod_logger = logging.getLogger(module_name)
+        _mod_logger.setLevel(logging.INFO)
+
+if debug_str:
+    for module_name in debug_str.split(':'):
+        _mod_logger = logging.getLogger(module_name)
+        _mod_logger.setLevel(logging.DEBUG)
+
+if one_shot_act:
+    if config_dir is None:
+        import xdg
+        config_dir = xdg.xdg_config_home() / APP_TITLE
+
+    import one_shot_pretty_act
+    one_shot_pretty_act.make_one_shot_act(arg, config_dir)
+    sys.exit(0)
 
 from qt_api import QT_API
 
@@ -87,14 +136,14 @@ from patchance_pb_manager import PatchancePatchbayManager
 from ptc_patch_engine_outer import PtcPatchEngineOuter
 
 
+
+
 @dataclass
 class Main:
     app: QApplication
     main_win: MainWindow
     patchbay_manager: PatchancePatchbayManager
     settings: QSettings
-
-
 
         
 def signal_handler(sig, frame):
@@ -104,18 +153,9 @@ def signal_handler(sig, frame):
 def get_code_root():
     return str(Path(__file__).parents[1])
 
-def make_logger():
-    logger = logging.getLogger(__name__)
-    log_handler = logging.StreamHandler()
-    log_handler.setFormatter(logging.Formatter(
-        f"%(name)s - %(levelname)s - %(message)s"))
-    logger.setLevel(logging.WARNING)
-    logger.addHandler(log_handler)
 
 def main_loop():
     global main
-    
-    make_logger()
     
     import resources_rc
     

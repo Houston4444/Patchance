@@ -2,9 +2,6 @@ import json
 from pathlib import Path
 import sys
 
-# add HoustonPatchbay as lib
-sys.path.insert(1, str(Path(__file__).parents[1] / 'HoustonPatchbay/source'))
-
 from patch_engine import PatchEngine, PatchEngineOuter
 
 
