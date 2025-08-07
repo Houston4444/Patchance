@@ -242,6 +242,9 @@ class PatchancePatchbayManager(PatchbayManager):
                 for key, value in key_dict.items():
                     self.metadata_update(uuid, key, value)
 
+        self.apply_delayed_changes_now()
+        self.pretty_diff_checker.full_update()
+
     def finish_init(self, main: 'Main'):
         self.set_main_win(main.main_win)
         self._setup_canvas()
@@ -249,7 +252,6 @@ class PatchancePatchbayManager(PatchbayManager):
         self.set_canvas_menu(CanvasMenu(self))
         self.set_tools_widget(main.main_win.patchbay_tools)
         self.set_filter_frame(main.main_win.ui.filterFrame)
-        
 
         self.set_options_dialog(
             CanvasOptionsDialog(self.main_win, self))

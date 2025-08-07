@@ -35,12 +35,6 @@ for arg in sys.argv[1:]:
                 |'--import-pretty-names'|'-p2c'\
                 |'--clear-pretty-names':
             one_shot_act = arg
-            # if config_dir is None:
-            #     import xdg
-            #     config_dir = xdg.xdg_config_home() / APP_TITLE
-
-            # import one_shot_pretty_act
-            # one_shot_pretty_act.make_one_shot_act(arg, config_dir)
         
         case '-dbg'|'--dbg':
             read_arg = ReadArg.DBG
@@ -82,7 +76,6 @@ for arg in sys.argv[1:]:
                     sys.exit(1)
             
             read_arg = ReadArg.NONE
-
 
 
 import logging
@@ -134,8 +127,6 @@ from engine_loop import PatchTimeoutObj
 from main_win import MainWindow
 from patchance_pb_manager import PatchancePatchbayManager
 from ptc_patch_engine_outer import PtcPatchEngineOuter
-
-
 
 
 @dataclass
