@@ -37,13 +37,14 @@ The required build dependencies are: <i>(devel packages of these)</i>
  - qtchooser
 
 On Debian and Ubuntu, use these commands to install all build dependencies: <br/>
-`$ sudo apt-get install python3-pyqt5 pyqt5-dev-tools qtchooser qttools5-dev-tools`
+`$ sudo apt-get install python3-pyqt5 pyqt5-dev-tools qtchooser qttools5-dev-tools python3-jack-client`
 
 On Fedora: <br/>
 ` $ sudo dnf install python3-qt5-devel qt-devel qtchooser`
 
 ===== RUNTIME DEPENDENCIES =====
 ---------------------------------
+python3-jack-client is needed.
 If you want to provide ALSA MIDI ports, you must have the python3-pyalsa lib with version >= 1.2.4.
 
 On Debian and Ubuntu, use these commands to install this optional dependency: <br/>
