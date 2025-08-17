@@ -1,5 +1,4 @@
 {
-    "ignore": [
-        "TODO",
-    ],
+    "ignore": ["TODO",],
+    "python.analysis.typeCheckingMode": "basic"
 }

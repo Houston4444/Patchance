@@ -17,7 +17,6 @@ from patchbay import (
 from patshared import (
     PortType, PortTypesViewFlag, from_json_to_str, Naming)
 
-from tools import get_code_root
 import xdg
 
 if TYPE_CHECKING:
@@ -156,12 +155,11 @@ class PatchancePatchbayManager(PatchbayManager):
     def _setup_canvas(self):
         SUBMODULE = 'HoustonPatchbay'
         THEME_PATH = Path(SUBMODULE) / 'themes'
-        source_theme_path = Path(get_code_root()) / THEME_PATH
-        manual_path = Path(get_code_root()) / SUBMODULE / 'manual'
-        theme_paths = list[Path]()
+        source_theme_path = Path(__file__).parents[1] / THEME_PATH
+        manual_path = Path(__file__).parents[1] / SUBMODULE / 'manual'
         
         app_title = QApplication.applicationName().lower()
-        
+        theme_paths = list[Path]()        
         theme_paths.append(xdg.xdg_data_home() / app_title / THEME_PATH)
 
         if source_theme_path.exists():
