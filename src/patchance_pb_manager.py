@@ -36,7 +36,7 @@ class PatchanceCallbacker(Callbacker):
         if TYPE_CHECKING:
             self.mng = manager
     
-    def _group_rename(
+    def group_rename(
             self, group_id: int, custom_name: str, save_in_jack: bool):
         if not save_in_jack:
             return
@@ -51,7 +51,7 @@ class PatchanceCallbacker(Callbacker):
         
         self.mng.pe.write_group_pretty_name(group.name, custom_name)
 
-    def _port_rename(
+    def port_rename(
             self, group_id: int, port_id: int,
             custom_name: str, save_in_jack: bool):
         if not save_in_jack:
@@ -64,18 +64,16 @@ class PatchanceCallbacker(Callbacker):
         if port.type.is_jack:
             self.mng.pe.write_port_pretty_name(port.full_name, custom_name)
 
-    def _ports_connect(self, group_out_id: int, port_out_id: int,
-                       group_in_id: int, port_in_id: int):
+    def ports_connect(self, group_out_id: int, port_out_id: int,
+                      group_in_id: int, port_in_id: int):
         port_out = self.mng.get_port_from_id(group_out_id, port_out_id)
         port_in = self.mng.get_port_from_id(group_in_id, port_in_id)
         if port_out is None or port_in is None:
             return
         
-        self.mng.pe.connect_ports(port_out.full_name, port_in.full_name)        
-        
-        
+        self.mng.pe.connect_ports(port_out.full_name, port_in.full_name)
 
-    def _ports_disconnect(self, connection_id: int):
+    def ports_disconnect(self, connection_id: int):
         for conn in self.mng.connections:
             if conn.connection_id == connection_id:
                 self.mng.pe.connect_ports(

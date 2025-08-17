@@ -1,3 +1,10 @@
+1.3.0 / 2025-09-XX
+    Features:
+        Views
+        Arrangments
+        Custom names
+
+
 1.1.0 / 2023-07-29
     Features:
         ALSA MIDI support : Add possibility to display and connect ALSA MIDI ports

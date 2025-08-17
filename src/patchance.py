@@ -108,7 +108,7 @@ if one_shot_act:
         config_dir = xdg.xdg_config_home() / APP_TITLE
 
     import one_shot_pretty_act
-    one_shot_pretty_act.make_one_shot_act(arg, config_dir)
+    one_shot_pretty_act.make_one_shot_act(one_shot_act, config_dir)
     sys.exit(0)
 
 from qt_api import QT_API
