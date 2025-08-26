@@ -160,14 +160,10 @@ install:
 	cp -r HoustonPatchbay/manual $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
 	cp -r HoustonPatchbay/source $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
 
-    # Copy pyjacklib
-	cp -r pyjacklib/jacklib $(DEST_PATCHANCE)/pyjacklib/
-
 # 	# Install main code
 	cp -r src $(DEST_PATCHANCE)/
 	
 # 	# compile python files
-	$(PYTHON) -m compileall $(DEST_PATCHANCE)/pyjacklib/jacklib/
 	$(PYTHON) -m compileall $(DEST_PATCHANCE)/HoustonPatchbay/source/
 	$(PYTHON) -m compileall $(DEST_PATCHANCE)/src/
 	
