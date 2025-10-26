@@ -9,21 +9,25 @@ DEST_PATCHANCE := $(DESTDIR)$(PREFIX)/share/patchance
 
 LINK = ln -s -f
 LRELEASE ?= lrelease
-QT_VERSION ?= 5
+RCC ?= rcc
+QT_VERSION ?= 6
 
-# if you set QT_VERSION environment variable to 6 at the make command
-# it will choose the other commands QT_API, pyuic6, pylupdate6.
-# You will can run patchichi directly in source without install
+# if you set QT_VERSION environment variable to 5 at the make command
+# it will choose the other commands QT_API, pyuic5, pylupdate5.
 
 ifeq ($(QT_VERSION), 6)
 	QT_API ?= PyQt6
 	PYUIC ?= pyuic6
 	PYLUPDATE ?= pylupdate6
+	ifeq (, $(shell which $(RCC))) 
+		RCC := /usr/lib/qt6/libexec/rcc
+	endif
+
 	ifeq (, $(shell which $(LRELEASE)))
 		LRELEASE := lrelease-qt6
 	endif
 else
-    QT_API ?= PyQt5
+	QT_API ?= PyQt5
 	PYUIC ?= pyuic5
 	PYLUPDATE ?= pylupdate5
 	ifeq (, $(shell which $(LRELEASE)))
@@ -102,6 +106,7 @@ clean:
 	rm -f -R src/ui
 	rm -f -R src/__pycache__ src/*/__pycache__ src/*/*/__pycache__ \
 		  src/*/*/*/__pycache__
+	rm -f src/qt_api.py
 
 # -------------------------
 
