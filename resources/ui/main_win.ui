@@ -77,6 +77,8 @@
     </property>
     <addaction name="actionAboutPatchance"/>
     <addaction name="actionAboutQt"/>
+    <addaction name="separator"/>
+    <addaction name="actionDonate"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuHelp"/>
@@ -205,6 +207,14 @@
    </property>
    <property name="text">
     <string>Menu</string>
+   </property>
+  </action>
+  <action name="actionDonate">
+   <property name="icon">
+    <iconset theme="help-donate"/>
+   </property>
+   <property name="text">
+    <string>Donate</string>
    </property>
   </action>
  </widget>

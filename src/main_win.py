@@ -6,9 +6,11 @@ from qtpy.QtGui import QResizeEvent, QKeyEvent
 from qtpy.QtWidgets import (
     QMainWindow, QShortcut, QMenu, QApplication, QToolButton)
 
-from about_dialog import AboutDialog
 from patchbay.tools_widgets import PatchbayToolsWidget, TextWithIcons
 from patchbay.bases.elements import ToolDisplayed
+
+from about_dialog import AboutDialog
+from donate_dialog import DonationsDialog
 
 from ui.main_win import Ui_MainWindow
 
@@ -44,6 +46,7 @@ class MainWindow(QMainWindow):
         self.ui.actionAboutPatchance.triggered.connect(
             self._show_about_dialog)
         self.ui.actionAboutQt.triggered.connect(QApplication.aboutQt)
+        self.ui.actionDonate.triggered.connect(self._show_donations_dialog)
 
         # prevent toolbar hideability
         self.ui.toolBar.toggleViewAction().setEnabled(False)
@@ -119,6 +122,10 @@ class MainWindow(QMainWindow):
     
     def _show_about_dialog(self):
         dialog = AboutDialog(self)
+        dialog.exec()
+    
+    def _show_donations_dialog(self):
+        dialog = DonationsDialog(self)
         dialog.exec()
     
     def refresh_patchbay(self):
