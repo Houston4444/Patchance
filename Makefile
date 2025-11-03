@@ -19,13 +19,23 @@ ifeq ($(QT_VERSION), 6)
 	QT_API ?= PyQt6
 	PYUIC ?= pyuic6
 	PYLUPDATE ?= pylupdate6
-	ifeq (, $(shell which $(RCC))) 
-		RCC := /usr/lib/qt6/libexec/rcc
+	RCC_EXEC := $(shell which $(RCC))
+	RCC_QT6_DEB := /usr/lib/qt6/libexec/rcc
+
+	ifeq (, ${RCC_EXEC})
+		RCC := ${RCC_QT6_DEB}
+	else
+		ifeq ($(shell readlink ${RCC_EXEC}), qtchooser)
+			ifeq ($(shell test -x ${RCC_QT6_DEB} | echo $$?), 0)
+				RCC := ${RCC_QT6_DEB}
+			endif
+		endif
 	endif
 
 	ifeq (, $(shell which $(LRELEASE)))
 		LRELEASE := lrelease-qt6
 	endif
+
 else
 	QT_API ?= PyQt5
 	PYUIC ?= pyuic5
@@ -44,7 +54,7 @@ ICON_SIZES := 16 24 32 48 64 96 128 256
 
 PYTHON := python3
 ifeq (, $(shell which $(PYTHON)))
-  PYTHON := python
+	PYTHON := python
 endif
 
 PATCHBAY_DIR=HoustonPatchbay
@@ -63,8 +73,7 @@ QT_PREPARE:
 	$(info compiling for Qt$(QT_VERSION) using $(QT_API))
 	$(file > $(BUILD_CFG_FILE),QT_API='$(QT_API)')
 
-    ifeq ($(QT_API), $(QT_API_INST))
-    else
+    ifneq ($(QT_API), $(QT_API_INST))
 		rm -f *~ src/*~ src/*.pyc src/ui/*.py \
 		    resources/locale/*.qm src/resources_rc.py
     endif

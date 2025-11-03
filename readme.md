@@ -26,7 +26,7 @@ It is a simple app for __HoustonPatchbay__ and it shows the possibility for any 
 
 ## Goals
 
-No mystery, the main goal of this software is too show to other devs the possibility to embbed the [HoustonPatchbay](https://github.com/Houston4444/HoustonPatchbay) submodule. Then, if someone has the motivation to implement new features, it is really welcome, I still have [many ideas](https://github.com/Houston4444/HoustonPatchbay/blob/main/plans.md).
+No mystery, the main original goal of this software was to show to other devs the possibility to embbed the [HoustonPatchbay](https://github.com/Houston4444/HoustonPatchbay) submodule. Then, if someone has the motivation to implement new features, it is really welcome, I still have [many ideas](https://github.com/Houston4444/HoustonPatchbay/blob/main/plans.md).
 
 Users can easily and quickly write patchbay themes, there are surely others who are better at creating beautiful things than I am.
 
@@ -35,4 +35,7 @@ I think this is also a good approach for first-time users, before they realise t
 ## History
 
 __Patchance__ is not directly a __Catia__ fork, but it comes from.
-Originally, the _patchanvas_ module (present in HousPatchbay submodule) has been copied from __Carla__ code. This module was previously copied by @falkTX from __Cadence__ (containing __Catia__ ) to __Carla__.
+Originally, the _patchanvas_ module (present in HoustonPatchbay submodule) has been copied from __Carla__ code. This module was previously copied by @falkTX from __Cadence__ (containing __Catia__ ) to __Carla__.
+
+# Install
+See [INSTALL.md](INSTALL.md)

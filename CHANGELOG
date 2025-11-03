@@ -1,9 +1,20 @@
-1.3.0 / 2025-09-XX
-    Features:
-        Views
-        Arrangments
-        Custom names
+1.3.0 / 2025-10-03
+    Qt6 is now the default framework (instead of Qt5).
+    
+    New dependencies:
+        python3-qtpy
+        python3 JACK-Client
 
+    Features:
+        Views: you can now use as much views as you want, switching them with Alt+Num
+        Hide: Boxes are now hideable (a widget in the tool bar allows to set hidden boxes visible)
+        Arrange: two scripts can be now arrange the graph, "follow the signal chain" or "two rows facing each other"
+        Custom Names: Clients and ports are now renamable in the canvas,
+            it can optionnally set this name as JACK metadata and auto-export custom names to JACK pretty names.
+        Undo/Redo: all box move, wrap/unwrap, hide/restore, arrange, change view events can be undone/redone
+        + Many many optimizations to prevent lagging when patchbay is consequent.
+        Tool bar: tool bar is now responsive design, it can have many lines if too much widgets are shown
+        Command line arguments: new command line arguments allow to import/export custom names and JACK pretty-name metadatas
 
 1.1.0 / 2023-07-29
     Features:
