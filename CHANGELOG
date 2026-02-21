@@ -1,3 +1,9 @@
+1.3.1 / 2026-02-21
+    Patchbay bug fixes.
+        CV ports were considered as regular Audio ports until a patchbay refresh
+        Some connection were missing in the graph after a pipewire quantum (buffer size) change
+        Sometimes the patch could crash if a JACK port disappears when listing JACK ports.
+
 1.3.0 / 2025-10-03
     Qt6 is now the default framework (instead of Qt5).
     
