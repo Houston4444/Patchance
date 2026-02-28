@@ -83,22 +83,22 @@ class PatchanceCallbacker(Callbacker):
 
 
 class PatchancePatchbayManager(PatchbayManager):
-    def __init__(self, engine: PatchEngine,
-                 settings: Union[QSettings, None] =None):
+    def __init__(
+            self, engine: PatchEngine, settings: QSettings | None =None):
         super().__init__(settings)
         self.pe = engine
         self._settings = settings
         
         self._memory_path = None
 
-        self._load_memory_file()
+        # self._load_memory_file()
 
     def _load_memory_file(self):
         if self._settings is None:
             return
         
         self._memory_path = \
-            Path(self._settings.fileName()).parent.joinpath(MEMORY_FILE)
+            Path(self._settings.fileName()).parent / MEMORY_FILE
 
         no_file_to_load = False
 
@@ -119,11 +119,11 @@ class PatchancePatchbayManager(PatchbayManager):
                 "it will be ignored.")
             no_file_to_load = True
         
-        self.view_number = 1
-
         if no_file_to_load:
             return
-        
+
+        self.view_number = 1
+
         if json_dict.get('views') is not None:
             self.views.eat_json_list(json_dict.get('views'), clear=True)
         
@@ -244,6 +244,7 @@ class PatchancePatchbayManager(PatchbayManager):
     def finish_init(self, main: 'Main'):
         self.set_main_win(main.main_win)
         self._setup_canvas()
+        self._load_memory_file()
 
         self.set_canvas_menu(CanvasMenu(self))
         self.set_tools_widget(main.main_win.patchbay_tools)
