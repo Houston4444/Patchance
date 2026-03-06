@@ -1,3 +1,8 @@
+1.3.2 / 2026-03-06
+    Bug fixes:
+        Crash if ports types filter frame is not set to ALL types
+        freeze if a port background color is black
+
 1.3.1 / 2026-02-21
     Patchbay bug fixes.
         CV ports were considered as regular Audio ports until a patchbay refresh

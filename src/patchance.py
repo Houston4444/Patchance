@@ -1,7 +1,7 @@
 #!/usr/bin/env -S python3 -u
 
 APP_TITLE = 'Patchance'
-VERSION = (1, 3, 1)
+VERSION = (1, 3, 2)
 
 from enum import Enum, auto
 import sys
