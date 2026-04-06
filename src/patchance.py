@@ -6,7 +6,7 @@ VERSION = (1, 4, 0)
 from enum import Enum, auto
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import logging
 
 # manage arguments now
@@ -170,9 +170,14 @@ def main_loop():
         app.installTranslator(patchbay_translator)
 
     sys_translator = QTranslator()
-    path_sys_translations = QLibraryInfo.location(QLibraryInfo.TranslationsPath)
-    if sys_translator.load(QLocale(), 'qt', '_', path_sys_translations):
-        app.installTranslator(sys_translator)
+    if QT_API != 'PyQt5' or TYPE_CHECKING:
+        path_sys_translations = QLibraryInfo.path(
+            QLibraryInfo.LibraryPath.TranslationsPath)
+    else:
+        path_sys_translations = QLibraryInfo.location(
+            QLibraryInfo.TranslationsPath)
+    sys_translator.load(path_sys_translations)
+    app.installTranslator(sys_translator)
 
     QFontDatabase.addApplicationFont(":/fonts/Ubuntu-R.ttf")
     QFontDatabase.addApplicationFont(":/fonts/Ubuntu-C.ttf")
@@ -212,7 +217,8 @@ def main_loop():
 
     pb_manager.finish_init(main)
     if not ALSA_LIB_OK:
-        pb_manager.options_dialog.enable_alsa_midi(False)
+        if pb_manager.options_dialog is not None:
+            pb_manager.options_dialog.enable_alsa_midi(False)
     
     timeout_obj = PatchTimeoutObj(engine)
     patch_timer = QTimer()

@@ -2,7 +2,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QSettings
 from qtpy.QtWidgets import QApplication
@@ -82,7 +82,7 @@ class PatchanceCallbacker(Callbacker):
 
 class PatchancePatchbayManager(PatchbayManager):
     def __init__(
-            self, engine: PatchEngine, settings: QSettings | None =None):
+            self, engine: PatchEngine, settings: QSettings):
         super().__init__(settings)
         self.pe = engine
         self._settings = settings
@@ -96,8 +96,6 @@ class PatchancePatchbayManager(PatchbayManager):
         self._memory_path = \
             Path(self._settings.fileName()).parent / MEMORY_FILE
 
-        no_file_to_load = False
-
         try:
             with open(self._memory_path, 'r') as f:                
                 json_dict = json.load(f)
@@ -107,24 +105,24 @@ class PatchancePatchbayManager(PatchbayManager):
             _logger.warning(
                 f"File {self._memory_path} has not been found, "
                 "It is probably the first startup.")
-            no_file_to_load = True
+            return
 
         except:
             _logger.warning(
                 f"File {self._memory_path} is incorrectly written, "
                 "it will be ignored.")
-            no_file_to_load = True
-        
-        if no_file_to_load:
             return
 
         self.view_number = 1
 
-        if json_dict.get('views') is not None:
-            self.views.eat_json_list(json_dict.get('views'), clear=True)
+        json_views = json_dict.get('views')
+        json_group_positions = json_dict.get('group_positions')
+
+        if json_views is not None:
+            self.views.eat_json_list(json_views, clear=True)
         
-        elif json_dict.get('group_positions') is not None:
-            group_positions: list[dict] = json_dict.get('group_positions')
+        elif json_group_positions is not None:
+            group_positions: list[dict] = json_group_positions
             higher_ptv_int = (PortTypesViewFlag.AUDIO
                               | PortTypesViewFlag.MIDI
                               | PortTypesViewFlag.CV).value
@@ -170,7 +168,7 @@ class PatchancePatchbayManager(PatchbayManager):
             assert isinstance(self.main_win, MainWindow)
 
         self.app_init(self.main_win.ui.graphicsView,
-                      theme_paths,
+                      tuple(theme_paths),
                       manual_path=manual_path,
                       callbacker=PatchanceCallbacker(self),
                       default_theme_name='Yellow Boards')
@@ -245,6 +243,9 @@ class PatchancePatchbayManager(PatchbayManager):
         self.set_canvas_menu(CanvasMenu(self))
         self.set_tools_widget(main.main_win.patchbay_tools)
         self.set_filter_frame(main.main_win.ui.filterFrame)
+
+        if self.main_win is None:
+            return
 
         self.set_options_dialog(
             CanvasOptionsDialog(self.main_win, self))
