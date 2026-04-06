@@ -3,5 +3,6 @@
         "HoustonPatchbay/source",
         "pyjacklib"
     ],
+    "python.analysis.typeCheckingMode": "basic",
     "makefile.configureOnOpen": false
 }

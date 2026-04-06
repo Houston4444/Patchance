@@ -14,8 +14,7 @@ from patchbay import (
     Callbacker,
     CanvasOptionsDialog,
     PatchbayManager)
-from patshared import (
-    PortType, PortTypesViewFlag, from_json_to_str, Naming)
+from patshared import PortTypesViewFlag, from_json_to_str, Naming
 
 import xdg
 
@@ -44,7 +43,6 @@ class PatchanceCallbacker(Callbacker):
         if group is None:
             return
 
-        
         if not group.uuid:
             return
         
@@ -90,8 +88,6 @@ class PatchancePatchbayManager(PatchbayManager):
         self._settings = settings
         
         self._memory_path = None
-
-        # self._load_memory_file()
 
     def _load_memory_file(self):
         if self._settings is None:
