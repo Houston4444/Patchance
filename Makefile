@@ -82,7 +82,7 @@ QT_PREPARE:
 RES: src/resources_rc.py
 
 src/resources_rc.py: resources/resources.qrc
-	rcc -g python $< |sed 's/ PySide. / qtpy /' > $@
+	$(RCC) -g python $< |sed 's/ PySide. / qtpy /' > $@
 
 # ---------------------
 # UI code
