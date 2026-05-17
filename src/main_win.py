@@ -6,6 +6,8 @@ from qtpy.QtGui import QResizeEvent, QKeyEvent
 from qtpy.QtWidgets import (
     QMainWindow, QShortcut, QMenu, QApplication, QToolButton)
 
+import resourcer
+
 from patchbay.tools_widgets import PatchbayToolsWidget, TextWithIcons
 from patchbay.bases.elements import ToolDisplayed
 
@@ -43,6 +45,7 @@ class MainWindow(QMainWindow):
         self.ui.filterFrame.setVisible(False)
         self.ui.actionShowMenuBar.toggled.connect(self._menubar_shown_toggled)
         self.ui.actionQuit.triggered.connect(self.quit_app)
+        self.ui.actionAboutPatchance.setIcon(resourcer.main_icon())
         self.ui.actionAboutPatchance.triggered.connect(
             self._show_about_dialog)
         self.ui.actionAboutQt.triggered.connect(QApplication.aboutQt)

@@ -183,10 +183,6 @@
    </property>
   </action>
   <action name="actionAboutPatchance">
-   <property name="icon">
-    <iconset resource="../resources.qrc">
-     <normaloff>:/main_icon/scalable/patchance.svg</normaloff>:/main_icon/scalable/patchance.svg</iconset>
-   </property>
    <property name="text">
     <string>About Patchance</string>
    </property>
@@ -237,7 +233,6 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../resources.qrc"/>
  </resources>
  <connections/>
 </ui>

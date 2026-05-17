@@ -61,7 +61,7 @@ PATCHBAY_DIR=HoustonPatchbay
 
 # ---------------------
 
-all: PATCHBAY QT_PREPARE UI RES LOCALE
+all: PATCHBAY QT_PREPARE UI LOCALE
 
 PATCHBAY:
 	@(cd $(PATCHBAY_DIR) && $(MAKE))
@@ -78,11 +78,6 @@ QT_PREPARE:
 		    resources/locale/*.qm src/resources_rc.py
     endif
 	install -d src/ui
-
-RES: src/resources_rc.py
-
-src/resources_rc.py: resources/resources.qrc
-	$(RCC) -g python $< |sed 's/ PySide. / qtpy /' > $@
 
 # ---------------------
 # UI code
