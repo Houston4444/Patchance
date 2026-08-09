@@ -122,6 +122,7 @@ from qtpy.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings, Q
 
 from patshared import Naming, custom_names
 from patch_engine import PatchEngine, ALSA_LIB_OK
+import jasm_mng
 
 from engine_loop import PatchTimeoutObj
 from main_win import MainWindow
@@ -135,6 +136,7 @@ class Main:
     main_win: MainWindow
     patchbay_manager: PatchancePatchbayManager
     settings: QSettings
+    jasm_server: jasm_mng.JasmServer
 
         
 def signal_handler(sig, frame):
@@ -210,10 +212,14 @@ def main_loop():
     pb_manager.jack_export_naming = export_naming
     engine.custom_names = pb_manager.custom_names
 
+    jasm_server = jasm_mng.JasmServer(pb_manager)
+    jasm_server.start()
+
     main = Main(app,
                 main_win,
                 pb_manager,
-                settings)
+                settings,
+                jasm_server)
 
     pb_manager.finish_init(main)
     if not ALSA_LIB_OK:
@@ -234,6 +240,8 @@ def main_loop():
     app.exec()
     settings.sync()
     pb_manager.save_positions()
+    
+    jasm_server.stop()
     
     patch_timer.stop()
     engine.exit()

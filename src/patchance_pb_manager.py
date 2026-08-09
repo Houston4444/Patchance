@@ -13,10 +13,14 @@ from patchbay import (
     CanvasMenu,
     Callbacker,
     CanvasOptionsDialog,
-    PatchbayManager)
+    PatchbayManager,
+    Group)
+from patchbay.patchbay_manager import in_main_thread
 from patshared import PortTypesViewFlag, from_json_to_str, Naming
 
+import jasm_mng
 import xdg
+
 
 if TYPE_CHECKING:
     from main_win import MainWindow
@@ -78,6 +82,20 @@ class PatchanceCallbacker(Callbacker):
                     conn.port_in.full_name,
                     disconnect=True)
                 return
+    
+    def client_show_gui(self, group_id: int, visible: int):
+        group = self.mng.get_group_from_id(group_id)
+        if group is None:
+            return
+
+        cret = jasm_mng.nsm_clients.client_for_jack_group(group.name)
+        if cret is None:
+            _logger.warning(
+                'Attempting to show optional GUI from a group without NSM Client')
+            return
+        
+        client_id, nsm_client = cret
+        self.mng._jasm_server.set_gui_state(client_id, bool(visible))
 
 
 class PatchancePatchbayManager(PatchbayManager):
@@ -214,6 +232,24 @@ class PatchancePatchbayManager(PatchbayManager):
         auto_export = Naming.CUSTOM in naming
         self.pe.set_pretty_names_auto_export(auto_export)
 
+    def set_group_as_nsm_client(self, group: Group):
+        ret = jasm_mng.nsm_clients.client_for_jack_group(group.name)
+        if ret is None:
+            return
+        
+        client_id, nsm_client = ret
+        group.set_client_icon(nsm_client.icon)
+        if nsm_client.has_optional_gui:
+            group.set_optional_gui_state(nsm_client.gui_visible)
+
+    @in_main_thread()
+    def nsm_gui_visibility_changed(self, client_id: str):
+        for group in self.groups:
+            cret = jasm_mng.nsm_clients.client_for_jack_group(group.name)
+            if cret is not None and cret[0] == client_id:
+                _, nsm_client = cret
+                group.set_optional_gui_state(nsm_client.gui_visible)
+
     def server_restarted(self):
         self.sample_rate_changed(self.pe.samplerate)
         self.buffer_size_changed(self.pe.buffer_size)
@@ -243,6 +279,8 @@ class PatchancePatchbayManager(PatchbayManager):
         self.set_canvas_menu(CanvasMenu(self))
         self.set_tools_widget(main.main_win.patchbay_tools)
         self.set_filter_frame(main.main_win.ui.filterFrame)
+        
+        self._jasm_server = main.jasm_server
 
         if self.main_win is None:
             return
