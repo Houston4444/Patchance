@@ -164,6 +164,9 @@ class JasmServer:
         self._osc_running = False
         self._osc_server = None
 
+        if not jasm_url:
+            jasm_url = os.getenv('jasm_url', '')
+
         if jasm_url and LIBLO_EXISTS:
             try:
                 jasm_addr = Address(jasm_url)
