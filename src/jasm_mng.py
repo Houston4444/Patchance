@@ -11,6 +11,7 @@ See https://codeberg.org/jasm
 import logging
 import os
 import threading
+import time
 from typing import TYPE_CHECKING
 
 from osclib import Server, Address, LIBLO_EXISTS
@@ -73,6 +74,9 @@ class _JasmOscServer(Server):
         
         self._running = False
         self._thread = threading.Thread(target=self._run)
+        
+        self._waiting_announce = False
+        self._start_time = 0.0
     
     def to_jasm(self, path: str, *args):
         self.send(self._jasm_addr, path, *args)
@@ -80,8 +84,16 @@ class _JasmOscServer(Server):
     def _run(self):
         while self._running:
             self.recv(50)
+            
+            if (self._waiting_announce
+                    and time.time() - self._start_time > 1.0):
+                _logger.warning(
+                    f'No answer from JASM port at {self._jasm_addr.url}')
+                self._waiting_announce = False
 
     def start(self):
+        self._waiting_announce = True
+        self._start_time = time.time()
         self.to_jasm('/jasm/gui/subscribe', ':clients:', 1)
         self._running = True
         self._thread.start()
@@ -95,6 +107,9 @@ class _JasmOscServer(Server):
         _logger.info(f'OSC received: {path} {args}')
         
         match (path, types):
+            case ('/jasm/subscribe/reply', 'ss'):
+                self._waiting_announce = False
+            
             case ('/nsm/gui/client/new', 'ss'):
                 id_info: tuple[str, str] = args # type:ignore
                 client_id, client_info = id_info
