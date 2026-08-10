@@ -13,13 +13,14 @@ import os
 import threading
 from typing import TYPE_CHECKING
 
-from osclib import Server
+from osclib import Server, LIBLO_EXISTS
 
 
 if TYPE_CHECKING:
     from patchance_pb_manager import PatchancePatchbayManager
 
 _logger = logging.getLogger(__name__)
+
 
 JASM_URL = os.getenv('jasm_url', 'osc.udp://localhost:62010')
 
@@ -62,7 +63,7 @@ class NsmClients(dict[str, NsmClient]):
 nsm_clients = NsmClients()
     
 
-class JasmServer(Server):
+class _JasmOscServer(Server):
     def __init__(self, patchbay_mng: 'PatchancePatchbayManager'):
         super().__init__()
         self._patchbay_mng = patchbay_mng
@@ -134,12 +135,40 @@ class JasmServer(Server):
                 old_new: tuple[str, str] = args # type:ignore
                 old_id, new_id = old_new
                 nsm_clients[new_id] = nsm_clients.pop(old_id)
+
+
+class JasmServer:
+    def __init__(self, pb_manager: 'PatchancePatchbayManager'):
+        self._patchbay_mng = pb_manager
+        self._osc_running = False
+
+        if LIBLO_EXISTS:
+            self._osc_server = _JasmOscServer(pb_manager)
+        else:
+            self._osc_server = None
+    
+    def start(self):
+        if self._osc_server is None:
+            return
+
+        self._osc_running = True
+        self._osc_server.start()
+    
+    def stop(self):
+        if self._osc_server is None or not self._osc_running:
+            return
+
+        self._osc_server.stop()
         
     def set_gui_state(self, client_id: str, gui_state: bool):
+        if self._osc_server is None:
+            _logger.warning(
+                'Attempting to change optional-gui state without OSC server')
+            return
+
         if gui_state:
-            self.send(
+            self._osc_server.send(
                 JASM_URL, '/nsm/gui/client/show_optional_gui', client_id)
         else:
-            self.send(
+            self._osc_server.send(
                 JASM_URL, '/nsm/gui/client/hide_optional_gui', client_id)
-
