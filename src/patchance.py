@@ -16,12 +16,14 @@ import logging
 class ReadArg(Enum):
     NONE = auto()
     CONFIG_DIR = auto()
+    JASM_URL = auto()
     DBG = auto()
     INFO = auto()
 
 
 read_arg = ReadArg.NONE
 config_dir: Optional[Path] = None
+jasm_url = ''
 debug_str = ''
 info_str = ''
 one_shot_act = ''
@@ -35,6 +37,11 @@ for arg in sys.argv[1:]:
                 |'--import-pretty-names'|'-p2c'\
                 |'--clear-pretty-names':
             one_shot_act = arg
+        
+        case '--jasm-url':
+            # in case there is no argument, set a default value
+            jasm_url = 'osc.udp://localhost:62010'
+            read_arg = ReadArg.JASM_URL
         
         case '-dbg'|'--dbg':
             read_arg = ReadArg.DBG
@@ -62,6 +69,9 @@ for arg in sys.argv[1:]:
                             f'Impossible to create config dir {config_dir}\n'
                             f'{str(e)}\n')
                         sys.exit(1)
+                
+                case ReadArg.JASM_URL:
+                    jasm_url = arg
                 
                 case ReadArg.DBG:
                     debug_str = arg
@@ -212,7 +222,7 @@ def main_loop():
     pb_manager.jack_export_naming = export_naming
     engine.custom_names = pb_manager.custom_names
 
-    jasm_server = jasm_mng.JasmServer(pb_manager)
+    jasm_server = jasm_mng.JasmServer(jasm_url, pb_manager)
     jasm_server.start()
 
     main = Main(app,

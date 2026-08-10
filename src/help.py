@@ -8,6 +8,9 @@ Usage: patchance [--help] [--version]
             import JACK pretty-names to custom names, save config and exit
   --clear-pretty-names
             delete all JACK pretty-name metadatas and exit
+  --jasm-url URL
+            try to connect to the JASM server at URL (or port),
+            in order to recognize which JACK clients belongs to NSM clients  
   --dbg, -dbg
             log debug for modules splitted with a ':',
             for example: --dbg patch_engine:patchbay.patchcanvas

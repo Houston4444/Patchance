@@ -13,7 +13,7 @@ import os
 import threading
 from typing import TYPE_CHECKING
 
-from osclib import Server, LIBLO_EXISTS
+from osclib import Server, Address, LIBLO_EXISTS
 
 
 if TYPE_CHECKING:
@@ -64,27 +64,32 @@ nsm_clients = NsmClients()
     
 
 class _JasmOscServer(Server):
-    def __init__(self, patchbay_mng: 'PatchancePatchbayManager'):
+    def __init__(self, jasm_addr: Address,
+                 patchbay_mng: 'PatchancePatchbayManager'):
         super().__init__()
         self._patchbay_mng = patchbay_mng
+        self._jasm_addr = jasm_addr
         self.add_method(None, None, self._receive)
         
         self._running = False
         self._thread = threading.Thread(target=self._run)
+    
+    def to_jasm(self, path: str, *args):
+        self.send(self._jasm_addr, path, *args)
     
     def _run(self):
         while self._running:
             self.recv(50)
 
     def start(self):
-        self.send(JASM_URL, '/jasm/gui/subscribe', ':clients:', 1)
+        self.to_jasm('/jasm/gui/subscribe', ':clients:', 1)
         self._running = True
         self._thread.start()
     
     def stop(self):
         self._running = False
         self._thread.join()
-        self.send(JASM_URL, '/jasm/gui/unsubscribe', ':clients:', 0)
+        self.to_jasm('/jasm/gui/unsubscribe', ':clients:', 0)
     
     def _receive(self, path: str, args: list, types: str, src_addr):
         _logger.info(f'OSC received: {path} {args}')
@@ -138,14 +143,21 @@ class _JasmOscServer(Server):
 
 
 class JasmServer:
-    def __init__(self, pb_manager: 'PatchancePatchbayManager'):
+    def __init__(
+            self, jasm_url: str, pb_manager: 'PatchancePatchbayManager'):
         self._patchbay_mng = pb_manager
         self._osc_running = False
+        self._osc_server = None
 
-        if LIBLO_EXISTS:
-            self._osc_server = _JasmOscServer(pb_manager)
-        else:
-            self._osc_server = None
+        if jasm_url and LIBLO_EXISTS:
+            try:
+                jasm_addr = Address(jasm_url)
+            except:
+                _logger.error(
+                    f'Attempting to connect to JASM '
+                    f'with an invalid OSC url: {jasm_url}')
+            else:
+                self._osc_server = _JasmOscServer(jasm_addr, pb_manager)
     
     def start(self):
         if self._osc_server is None:
@@ -159,6 +171,7 @@ class JasmServer:
             return
 
         self._osc_server.stop()
+        self._osc_running = False
         
     def set_gui_state(self, client_id: str, gui_state: bool):
         if self._osc_server is None:
@@ -167,8 +180,8 @@ class JasmServer:
             return
 
         if gui_state:
-            self._osc_server.send(
-                JASM_URL, '/nsm/gui/client/show_optional_gui', client_id)
+            self._osc_server.to_jasm(
+                '/nsm/gui/client/show_optional_gui', client_id)
         else:
-            self._osc_server.send(
-                JASM_URL, '/nsm/gui/client/hide_optional_gui', client_id)
+            self._osc_server.to_jasm(
+                '/nsm/gui/client/hide_optional_gui', client_id)
