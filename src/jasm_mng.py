@@ -10,9 +10,10 @@ See https://codeberg.org/jasm
 
 import logging
 import os
+import threading
 from typing import TYPE_CHECKING
 
-from osclib import ServerThread
+from osclib import Server
 
 
 if TYPE_CHECKING:
@@ -61,19 +62,28 @@ class NsmClients(dict[str, NsmClient]):
 nsm_clients = NsmClients()
     
 
-class JasmServer(ServerThread):
+class JasmServer(Server):
     def __init__(self, patchbay_mng: 'PatchancePatchbayManager'):
         super().__init__()
         self._patchbay_mng = patchbay_mng
         self.add_method(None, None, self._receive)
+        
+        self._running = False
+        self._thread = threading.Thread(target=self._run)
+    
+    def _run(self):
+        while self._running:
+            self.recv(50)
 
     def start(self):
         self.send(JASM_URL, '/jasm/gui/subscribe', ':clients:', 1)
-        super().start()
+        self._running = True
+        self._thread.start()
     
     def stop(self):
-        super().stop()
-        self.send(JASM_URL, '/jasm/gui/unsubscribe', ':clients:', 1)
+        self._running = False
+        self._thread.join()
+        self.send(JASM_URL, '/jasm/gui/unsubscribe', ':clients:', 0)
     
     def _receive(self, path: str, args: list, types: str, src_addr):
         _logger.info(f'OSC received: {path} {args}')
