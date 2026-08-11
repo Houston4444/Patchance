@@ -232,6 +232,13 @@ class PatchancePatchbayManager(PatchbayManager):
         auto_export = Naming.CUSTOM in naming
         self.pe.set_pretty_names_auto_export(auto_export)
 
+    def get_corrected_a2j_group_name(self, group_name: str) -> str:
+        # fix a2j wrongly substitute '.' with space
+        for client_id, nsm_client in jasm_mng.nsm_clients.items():
+            if group_name == f'{nsm_client.name} {client_id}':
+                return f'{nsm_client.name}.{client_id}'
+        return group_name
+
     def set_group_as_nsm_client(self, group: Group):
         ret = jasm_mng.nsm_clients.client_for_jack_group(group.name)
         if ret is None:
