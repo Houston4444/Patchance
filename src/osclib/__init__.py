@@ -13,12 +13,7 @@ else:
             UDP, UNIX, TCP, Message, Bundle, Address, Server, ServerThread,
             ServerError, AddressError, make_method, send)
     except ImportError:
-        try:
-            from pyliblo3 import (
-                UDP, UNIX, TCP, Message, Bundle, Address, Server, ServerThread,
-                ServerError, AddressError, make_method, send)
-        except ImportError:
-            LIBLO_EXISTS = False
-            _logger.warning(
-                'Failed to find a liblo lib for OSC (liblo or pyliblo3)')
-            _logger.warning(str(e))
+        # try:
+        from pyliblo3 import (
+            UDP, UNIX, TCP, Message, Bundle, Address, Server, ServerThread,
+            ServerError, AddressError, make_method, send)

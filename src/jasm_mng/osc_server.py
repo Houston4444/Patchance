@@ -1,21 +1,12 @@
 
-'''
-This module manages the communication with JASM server,
-a NSM server. The communication uses OSC protocol, it allows
-to identify some JACK groups as NSM clients, and hide/show their
-optional GUI from the patchbay.
-
-See https://codeberg.org/jasm
-'''
-
 import logging
-import os
 import threading
 import time
 from typing import TYPE_CHECKING
 
-from osclib import Server, Address, LIBLO_EXISTS
+from osclib import Address, Server
 
+from .nsm_client import NsmClient, nsm_clients
 
 if TYPE_CHECKING:
     from patchance_pb_manager import PatchancePatchbayManager
@@ -23,48 +14,7 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
-JASM_URL = os.getenv('jasm_url', 'osc.udp://localhost:62010')
-
-
-def group_belongs_to_client(group_name: str, jack_client_name: str) -> bool:
-    if group_name == jack_client_name:
-        return True
-
-    if group_name.startswith(jack_client_name + '/'):
-        return True
-
-    if (group_name.startswith(jack_client_name + ' (')
-            and group_name.endswith(')')):
-        # Non-Mixer way
-        return True
-
-    if group_name == jack_client_name + '-midi':
-        # Hydrogen specific
-        return True
-
-    return False
-
-
-class NsmClient:
-    executable = ''
-    name = ''
-    has_optional_gui = False
-    gui_visible = False
-    icon = ''
-
-
-class NsmClients(dict[str, NsmClient]):
-    def client_for_jack_group(
-            self, group_name: str) -> tuple[str, NsmClient] | None:
-        for client_id, nsm_client in self.items():
-            if group_belongs_to_client(
-                    group_name, f'{nsm_client.name}.{client_id}'):
-                return client_id, nsm_client
-
-nsm_clients = NsmClients()
-    
-
-class _JasmOscServer(Server):
+class JasmOscServer(Server):
     def __init__(self, jasm_addr: Address,
                  patchbay_mng: 'PatchancePatchbayManager'):
         super().__init__()
@@ -155,51 +105,3 @@ class _JasmOscServer(Server):
                 old_new: tuple[str, str] = args # type:ignore
                 old_id, new_id = old_new
                 nsm_clients[new_id] = nsm_clients.pop(old_id)
-
-
-class JasmServer:
-    def __init__(
-            self, jasm_url: str, pb_manager: 'PatchancePatchbayManager'):
-        self._patchbay_mng = pb_manager
-        self._osc_running = False
-        self._osc_server = None
-
-        if not jasm_url:
-            jasm_url = os.getenv('jasm_url', '')
-
-        if jasm_url and LIBLO_EXISTS:
-            try:
-                jasm_addr = Address(jasm_url)
-            except:
-                _logger.error(
-                    f'Attempting to connect to JASM '
-                    f'with an invalid OSC url: {jasm_url}')
-            else:
-                self._osc_server = _JasmOscServer(jasm_addr, pb_manager)
-    
-    def start(self):
-        if self._osc_server is None:
-            return
-
-        self._osc_running = True
-        self._osc_server.start()
-    
-    def stop(self):
-        if self._osc_server is None or not self._osc_running:
-            return
-
-        self._osc_server.stop()
-        self._osc_running = False
-        
-    def set_gui_state(self, client_id: str, gui_state: bool):
-        if self._osc_server is None:
-            _logger.warning(
-                'Attempting to change optional-gui state without OSC server')
-            return
-
-        if gui_state:
-            self._osc_server.to_jasm(
-                '/nsm/gui/client/show_optional_gui', client_id)
-        else:
-            self._osc_server.to_jasm(
-                '/nsm/gui/client/hide_optional_gui', client_id)
