@@ -1,7 +1,5 @@
 from typing import TYPE_CHECKING
 
-LIBLO_EXISTS = True
-
 if TYPE_CHECKING:
     from dum_imports import (
         UDP, UNIX, TCP, Message, Bundle, Address, Server, ServerThread,
@@ -13,7 +11,6 @@ else:
             UDP, UNIX, TCP, Message, Bundle, Address, Server, ServerThread,
             ServerError, AddressError, make_method, send)
     except ImportError:
-        # try:
         from pyliblo3 import (
             UDP, UNIX, TCP, Message, Bundle, Address, Server, ServerThread,
             ServerError, AddressError, make_method, send)

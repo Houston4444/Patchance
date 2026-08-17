@@ -20,7 +20,28 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
+def style_url_in_liblo(url: str) -> str:
+    '''Adapt the URL to the liblo scheme,
+    starting with osc.protocol://domain:port or keep it in case
+    url contains only digits (supposed to be a port number)'''
+    if (url.startswith(('osc.udp://', 'osc.tcp://', 'osc.unix://'))
+            or url.isdigit()):
+        return url
+    
+    if url.startswith(('osc://', 'udp://')):
+        return f'osc.udp://{url[6:]}'
+    
+    if url.startswith('tcp://'):
+        return f'osc.tcp://{url[6:]}'
+    
+    return f'osc.udp://{url}'
+    
+
 class JasmServer:
+    '''Manages the OSC server which communicate with JASM, if it has to exist.
+    
+    jasm_url : the jasm_url passed as command line argument for --jasm-url
+    pb_manager : the pachbay manager'''
     def __init__(
             self, jasm_url: str, pb_manager: 'PatchancePatchbayManager'):
         self._patchbay_mng = pb_manager
@@ -40,6 +61,8 @@ class JasmServer:
                 'liblo or pyliblo3 for python is missing. '
                 'Impossible to communicate with JASM')
             return
+
+        jasm_url = style_url_in_liblo(jasm_url)
 
         try:
             jasm_addr = Address(jasm_url)
