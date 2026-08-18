@@ -1,8 +1,10 @@
 from qtpy.QtCore import QUrl
-from qtpy.QtGui import QDesktopServices, QIcon
+from qtpy.QtGui import QDesktopServices
 from qtpy.QtWidgets import QDialog
 
 from patchbay.tools_widgets import is_dark_theme
+from resources import scalables
+import resourcer
 
 from ui.donations import Ui_Dialog
 
@@ -13,11 +15,10 @@ class DonationsDialog(QDialog):
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         
-        self.ui.checkBox.setVisible(False)
-        
-        dark = '-dark' if is_dark_theme(self) else ''
+        self.ui.checkBox.setVisible(False)        
         self.ui.toolButtonImage.setIcon(
-            QIcon(f':scalable/breeze{dark}/handshake-deal.svg'))
+            resourcer.icon(
+                scalables.misc.HANDSHAKE_DEAL, dark=is_dark_theme(self)))
         
         self.ui.toolButtonDonate.clicked.connect(self._donate)
         
