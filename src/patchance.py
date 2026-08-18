@@ -189,8 +189,8 @@ def main_loop():
     else:
         path_sys_translations = QLibraryInfo.location(
             QLibraryInfo.TranslationsPath)
-    sys_translator.load(path_sys_translations)
-    app.installTranslator(sys_translator)
+    if sys_translator.load(QLocale(), 'qtbase', '_', path_sys_translations):
+        app.installTranslator(sys_translator)
 
     resourcer.install_fonts()
 
