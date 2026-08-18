@@ -130,10 +130,11 @@ from qtpy.QtWidgets import QApplication
 from qtpy.QtGui import QIcon, QFontDatabase
 from qtpy.QtCore import QLocale, QTranslator, QTimer, QLibraryInfo, QSettings, QObject
 
-from patshared import Naming, custom_names
+from patshared import Naming
 from patch_engine import PatchEngine, ALSA_LIB_OK
-import jasm_mng
+import resourcer
 
+import jasm_mng
 from engine_loop import PatchTimeoutObj
 from main_win import MainWindow
 from patchance_pb_manager import PatchancePatchbayManager
@@ -156,18 +157,17 @@ def signal_handler(sig, frame):
 def get_code_root():
     return str(Path(__file__).parents[1])
 
-
 def main_loop():
     global main
     
-    import resources_rc
+    resourcer.resources_paths.insert(
+        0, Path(__file__).parents[1] / 'resources')
     
     app = QApplication(sys.argv)
     app.setApplicationName(APP_TITLE)
     app.setApplicationVersion('.'.join([str(i) for i in VERSION]))
     app.setOrganizationName(APP_TITLE)
-    app.setWindowIcon(QIcon(
-        f':/main_icon/scalable/{APP_TITLE.lower()}.svg'))
+    app.setWindowIcon(resourcer.main_icon())
     app.setDesktopFileName(APP_TITLE.lower())
     
     ### Translation process
@@ -177,8 +177,9 @@ def main_loop():
         app.installTranslator(app_translator)
 
     patchbay_translator = QTranslator()
-    if patchbay_translator.load(QLocale(), 'patchbay',
-                                '_', "%s/HoustonPatchbay/locale" % get_code_root()):
+    if patchbay_translator.load(
+            QLocale(), 'patchbay',
+            '_', "%s/HoustonPatchbay/locale" % get_code_root()):
         app.installTranslator(patchbay_translator)
 
     sys_translator = QTranslator()
@@ -191,8 +192,7 @@ def main_loop():
     sys_translator.load(path_sys_translations)
     app.installTranslator(sys_translator)
 
-    QFontDatabase.addApplicationFont(":/fonts/Ubuntu-R.ttf")
-    QFontDatabase.addApplicationFont(":/fonts/Ubuntu-C.ttf")
+    resourcer.install_fonts()
 
     #connect signals
     signal.signal(signal.SIGINT, signal_handler)

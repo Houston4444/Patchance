@@ -9,7 +9,6 @@ DEST_PATCHANCE := $(DESTDIR)$(PREFIX)/share/patchance
 
 LINK = ln -s -f
 LRELEASE ?= lrelease
-RCC ?= rcc
 QT_VERSION ?= 6
 
 # if you set QT_VERSION environment variable to 5 at the make command
@@ -19,19 +18,6 @@ ifeq ($(QT_VERSION), 6)
 	QT_API ?= PyQt6
 	PYUIC ?= pyuic6
 	PYLUPDATE ?= pylupdate6
-	RCC_EXEC := $(shell which $(RCC))
-	RCC_QT6_DEB := /usr/lib/qt6/libexec/rcc
-
-	ifeq (, ${RCC_EXEC})
-		RCC := ${RCC_QT6_DEB}
-	else
-		ifeq ($(shell readlink ${RCC_EXEC}), qtchooser)
-			ifeq ($(shell test -x ${RCC_QT6_DEB} | echo $$?), 0)
-				RCC := ${RCC_QT6_DEB}
-			endif
-		endif
-	endif
-
 	ifeq (, $(shell which $(LRELEASE)))
 		LRELEASE := lrelease-qt6
 	endif
@@ -61,7 +47,7 @@ PATCHBAY_DIR=HoustonPatchbay
 
 # ---------------------
 
-all: PATCHBAY QT_PREPARE UI RES LOCALE
+all: PATCHBAY QT_PREPARE UI LOCALE
 
 PATCHBAY:
 	@(cd $(PATCHBAY_DIR) && $(MAKE))
@@ -78,11 +64,6 @@ QT_PREPARE:
 		    resources/locale/*.qm src/resources_rc.py
     endif
 	install -d src/ui
-
-RES: src/resources_rc.py
-
-src/resources_rc.py: resources/resources.qrc
-	$(RCC) -g python $< |sed 's/ PySide. / qtpy /' > $@
 
 # ---------------------
 # UI code
@@ -140,6 +121,7 @@ install:
 	install -d $(DESTDIR)$(PREFIX)/share/applications/
 	install -d $(DEST_PATCHANCE)/
 	install -d $(DEST_PATCHANCE)/locale/
+	install -d $(DEST_PATCHANCE)/resources/
 	install -d $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
 	install -d $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/locale
 	
@@ -168,6 +150,7 @@ install:
 # 	# Install icons, scalable
 	install -m 644 resources/main_icon/scalable/patchance.svg \
 		$(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/
+	cp -r resources/main_icon $(DEST_PATCHANCE)/resources/
 
     # Copy patchbay themes, manual and lib
 	cp -r HoustonPatchbay/themes $(DEST_PATCHANCE)/$(PATCHBAY_DIR)/
