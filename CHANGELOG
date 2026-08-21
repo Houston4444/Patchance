@@ -1,3 +1,16 @@
+1.5.0 / 2026-09-XX
+    Features:
+        Tracks: It is now possible for some programs (Ardour, Mixbus, Zrythm and carla-jack-single) to split tracks in new boxes for a nicer patchbay view.
+        JASM: With --jasm-url argument, Patchance can connect to JASM, a new NSM session manager (https://codeberg.org/jasm)
+        widgets: Port types filter and Zoom slider widgets have a new design.
+        Icons: Box icons are now found with the .desktop files and should have more chances to be found
+
+    Bug fixes:
+        No need for rcc executable anymore, icons and fonts are installed and used directly, it simplifies the make process without affecting seriously the startup time.
+        Fix impossibility to set custom name on an item which already has one.
+        various fixes at view changes.
+
+
 1.3.2 / 2026-03-06
     Bug fixes:
         Crash if ports types filter frame is not set to ALL types
