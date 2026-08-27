@@ -23,7 +23,7 @@ class DonationsDialog(QDialog):
             resourcer.icon(
                 scalables.misc.LIBERAPAY_LOGO_BLACK_ON_YELLOW))
         self.ui.toolButtonDonate.clicked.connect(self._donate)
-        
+
     def _donate(self):
         QDesktopServices.openUrl(
             QUrl('https://liberapay.com/Houston4444'))
