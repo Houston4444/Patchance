@@ -8,6 +8,7 @@ from qtpy.QtWidgets import (
 
 from patchbay.tools_widgets import PatchbayToolsWidget, TextWithIcons
 from patchbay.bases.elements import ToolDisplayed
+from resourcer import main_icon
 
 from about_dialog import AboutDialog
 from donate_dialog import DonationsDialog
@@ -45,6 +46,7 @@ class MainWindow(QMainWindow):
         self.ui.actionQuit.triggered.connect(self.quit_app)
         self.ui.actionAboutPatchance.triggered.connect(
             self._show_about_dialog)
+        self.ui.actionAboutPatchance.setIcon(main_icon())
         self.ui.actionAboutQt.triggered.connect(QApplication.aboutQt)
         self.ui.actionDonate.triggered.connect(self._show_donations_dialog)
 
